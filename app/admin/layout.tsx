@@ -1,16 +1,24 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import Link from 'next/link';
-import { Shield, LayoutDashboard, LogOut } from 'lucide-react';
+import { Shield, LayoutDashboard, LogOut, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/cn';
+import Modal from '@/components/ui/Modal';
+import Button from '@/components/ui/Button';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { admin, isLoading, isAuthenticated, logout } = useAdminAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  const handleLogout = async () => {
+    setShowLogoutModal(false);
+    await logout();
+  };
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -36,9 +44,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950">
-      <div className="flex">
+      <div className="flex min-h-screen">
         {/* Sidebar */}
-        <aside className="w-64 min-h-screen bg-gray-100 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800">
+        <aside className="w-64 min-h-screen bg-gray-100 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 shrink-0">
           <div className="p-6">
             <div className="flex items-center gap-3 mb-8">
               <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
@@ -75,7 +83,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
             <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-800">
               <button
-                onClick={logout}
+                onClick={() => setShowLogoutModal(true)}
                 className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors w-full"
               >
                 <LogOut className="w-5 h-5" />
@@ -90,6 +98,45 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {children}
         </main>
       </div>
+
+      {/* Logout Confirmation Modal */}
+      <Modal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        title="Confirm Logout"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <div className="flex items-start gap-3">
+            <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+              <AlertTriangle className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+            </div>
+            <div className="flex-1">
+              <p className="text-gray-700 dark:text-gray-300">
+                Are you sure you want to logout? You'll need your secret key to login again.
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-3 pt-2">
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => setShowLogoutModal(false)}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              size="lg"
+              onClick={handleLogout}
+              className="flex-1 bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700"
+            >
+              Logout
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

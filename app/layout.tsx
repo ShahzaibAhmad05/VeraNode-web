@@ -59,9 +59,15 @@ export default function RootLayout({
                     color: '#fff',
                   },
                   success: {
+                    icon: '✓',
                     iconTheme: {
-                      primary: '#fff',
-                      secondary: '#363636',
+                      primary: '#10b981',
+                      secondary: '#fff',
+                    },
+                    style: {
+                      background: '#fff',
+                      color: '#1f2937',
+                      border: '1px solid #d1d5db',
                     },
                   },
                   error: {

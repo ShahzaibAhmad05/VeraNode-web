@@ -189,7 +189,7 @@ export default function AdminDashboardPage() {
           const Icon = stat.icon;
           
           return (
-            <Card key={index} hover={false} className="p-6">
+            <Card key={index} className="p-6">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -213,7 +213,7 @@ export default function AdminDashboardPage() {
 
       {/* Blocked Users Section */}
       {blockedUsers.length > 0 && (
-        <Card hover={false} className="overflow-hidden">
+        <Card className="overflow-hidden">
           <div className="p-6 border-b border-gray-200 dark:border-gray-700">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">
               Blocked Users ({blockedUsers.length})
@@ -322,7 +322,7 @@ export default function AdminDashboardPage() {
 
       {/* Auto-refresh indicator */}
       <p className="text-xs text-gray-500 dark:text-gray-600 text-center">
-        Auto-refresh every 30 seconds
+        Auto-refreshes every 30 seconds
       </p>
     </div>
   );

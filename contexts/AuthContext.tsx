@@ -82,7 +82,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           },
         });
         
-        router.push('/admin/dashboard');
+        // Use window.location for full page reload so AdminAuthContext initializes properly
+        window.location.href = '/admin/dashboard';
       } else {
         // Handle student login
         if (response.profile) {

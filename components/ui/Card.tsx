@@ -33,13 +33,13 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
       <MotionDiv
         ref={ref}
         className={cn(
-          'bg-white dark:bg-gray-900 rounded-xl shadow-lg p-6',
+          'bg-white dark:bg-gray-900 rounded-xl shadow-md p-6',
           'border border-gray-200 dark:border-gray-800',
-          'transition-shadow duration-200',
-          'hover:shadow-xl',
+          'transition-all duration-150',
+          'hover:shadow-lg',
           className
         )}
-        whileHover={{ scale: 1.02, y: -4 }}
+        whileHover={{ scale: 1.02 }}
         transition={{ duration: 0.2 }}
         {...props}
       >
