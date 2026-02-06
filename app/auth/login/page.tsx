@@ -49,7 +49,7 @@ export default function LoginPage() {
         <Card hover={false} className="p-10">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+            <div className="w-20 h-20 bg-linear-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
               <Key className="w-10 h-10 text-white" />
             </div>
             <h1 className="text-4xl font-black text-gray-900 dark:text-white mb-3 tracking-tight">
@@ -101,13 +101,11 @@ export default function LoginPage() {
 
           {/* Footer Links */}
           <div className="mt-8 space-y-4">
-            <div className="text-center">
-              <Link
-                href="/auth/recover"
-                className="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline"
-              >
-                Forgot your secret key?
-              </Link>
+            {/* Warning about lost keys */}
+            <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl">
+              <p className="text-sm text-center text-yellow-900 dark:text-yellow-300 font-medium">
+                ⚠️ <strong>Warning:</strong> Lost keys cannot be recovered. Keep your key safe!
+              </p>
             </div>
             
             <div className="relative">

@@ -6,11 +6,9 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Card from '@/components/ui/Card';
 import Modal from '@/components/ui/Modal';
-import PasswordStrength from '@/components/ui/PasswordStrength';
 import { UserPlus, Copy, CheckCircle, AlertTriangle, Shield, Key } from 'lucide-react';
 import { copyToClipboard } from '@/lib/utils';
 import type { AreaOfVote } from '@/types';
@@ -18,9 +16,6 @@ import type { AreaOfVote } from '@/types';
 export default function RegisterPage() {
   const router = useRouter();
   const { register, isAuthenticated } = useAuth();
-  const [universityId, setUniversityId] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [area, setArea] = useState<AreaOfVote>('General');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -56,30 +51,10 @@ export default function RegisterPage() {
       return;
     }
 
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters long');
-      return;
-    }
-
-    const hasUpperCase = /[A-Z]/.test(password);
-    const hasLowerCase = /[a-z]/.test(password);
-    const hasNumber = /[0-9]/.test(password);
-    const hasSpecialChar = /[^A-Za-z0-9]/.test(password);
-
-    if (!hasUpperCase || !hasLowerCase || !hasNumber || !hasSpecialChar) {
-      setError('Password must meet all security requirements');
-      return;
-    }
-
     setIsLoading(true);
 
     try {
-      const response = await register(universityId, password, area);
+      const response = await register(area);
       
       // Show the secret key modal
       setGeneratedSecretKey(response.secretKey);
@@ -117,7 +92,7 @@ export default function RegisterPage() {
           <Card hover={false} className="p-10">
             {/* Header */}
             <div className="text-center mb-8">
-              <div className="w-20 h-20 bg-gradient-to-br from-green-600 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+              <div className="w-20 h-20 bg-linear-to-br from-green-600 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
                 <UserPlus className="w-10 h-10 text-white" />
               </div>
               <h1 className="text-4xl font-black text-gray-900 dark:text-white mb-3 tracking-tight">
@@ -144,53 +119,12 @@ export default function RegisterPage() {
 
             {/* Register Form */}
             <form onSubmit={handleSubmit} className="space-y-6">
-              <Input
-                label="University ID"
-                type="text"
-                value={universityId}
-                onChange={(e) => setUniversityId(e.target.value)}
-                placeholder="e.g., 21i-1234"
-                required
-                disabled={isLoading}
-                helperText="For account recovery only"
-              />
-
               <Select
                 label="School / Area"
                 value={area}
                 onChange={(e) => setArea(e.target.value as AreaOfVote)}
                 options={areaOptions}
                 disabled={isLoading}
-              />
-
-              <div>
-                <Input
-                  label="Password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Create a strong password"
-                  required
-                  disabled={isLoading}
-                  showPasswordToggle={true}
-                />
-                {password && (
-                  <div className="mt-3">
-                    <PasswordStrength password={password} />
-                  </div>
-                )}
-              </div>
-
-              <Input
-                label="Confirm Password"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm your password"
-                required
-                disabled={isLoading}
-                showPasswordToggle={true}
-                error={confirmPassword && password !== confirmPassword ? 'Passwords do not match' : undefined}
               />
 
               {/* Terms Checkbox */}
@@ -259,7 +193,7 @@ export default function RegisterPage() {
         <div className="space-y-6">
           {/* Icon and Title */}
           <div className="text-center">
-            <div className="w-20 h-20 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl">
+            <div className="w-20 h-20 bg-linear-to-br from-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl">
               <Key className="w-10 h-10 text-white" />
             </div>
             <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-2">
@@ -271,19 +205,19 @@ export default function RegisterPage() {
           </div>
 
           {/* Warning Box */}
-          <div className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border-2 border-yellow-400 dark:border-yellow-600 rounded-xl p-6">
+          <div className="bg-linear-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border-2 border-yellow-400 dark:border-yellow-600 rounded-xl p-6">
             <p className="text-lg text-yellow-900 dark:text-yellow-300 font-bold mb-3 text-center">
-              ⚠️ CRITICAL: This will NOT be shown again!
+              ⚠️ SAVE YOUR SECRET KEY - it cannot be recovered or regenerated!
             </p>
             <ul className="text-sm text-yellow-800 dark:text-yellow-400 space-y-2 list-disc list-inside">
               <li>Your secret key maintains your anonymity</li>
-              <li>University ID/password are ONLY for recovery</li>
-              <li>You cannot login without this key</li>
+              <li>This is your ONLY way to login</li>
+              <li>Lost keys cannot be recovered</li>
             </ul>
           </div>
 
           {/* Secret Key Display */}
-          <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-xl p-6 border-2 border-gray-300 dark:border-gray-700">
+          <div className="bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-xl p-6 border-2 border-gray-300 dark:border-gray-700">
             <p className="text-xs text-gray-600 dark:text-gray-400 mb-3 font-bold uppercase tracking-wider text-center">
               Your Secret Key
             </p>

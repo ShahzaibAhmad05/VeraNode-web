@@ -12,8 +12,7 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (secretKey: string) => Promise<void>;
-  register: (universityId: string, password: string, area: string) => Promise<{ secretKey: string }>;
-  recover: (universityId: string, password: string) => Promise<{ secretKey: string }>;
+  register: (area: string) => Promise<{ secretKey: string }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -84,27 +83,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const register = async (universityId: string, password: string, area: string) => {
+  const register = async (area: string) => {
     try {
-      const response = await authAPI.register(universityId, password, area);
+      const response = await authAPI.register(area);
       
       // Don't auto-login after registration - user needs to save secret key first
       // Just return the secret key to display in the UI
       return { secretKey: response.secretKey };
     } catch (error: any) {
       const message = error.response?.data?.message || 'Registration failed';
-      toast.error(message);
-      throw error;
-    }
-  };
-
-  const recover = async (universityId: string, password: string) => {
-    try {
-      const response = await authAPI.recover(universityId, password);
-      toast.success('Secret key recovered successfully!');
-      return { secretKey: response.secretKey };
-    } catch (error: any) {
-      const message = error.response?.data?.message || 'Recovery failed';
       toast.error(message);
       throw error;
     }
@@ -143,7 +130,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider
       value={{
-        recover,
         user,
         secretKey,
         isLoading,

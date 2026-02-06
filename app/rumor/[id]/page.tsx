@@ -91,7 +91,8 @@ export default function RumorDetailPage() {
   }
 
   const factPercentage = calculatePercentage(stats.factWeight, stats.factWeight + stats.lieWeight);
-  const withinAreaProgress = calculatePercentage(stats.withinAreaVotes, stats.totalVotes);
+  const underAreaProgress = calculatePercentage(stats.underAreaVotes, stats.totalVotes);
+  const notUnderAreaProgress = stats.notUnderAreaVotes ? calculatePercentage(stats.notUnderAreaVotes, stats.totalVotes) : 0;
 
   return (
     <div className="min-h-[calc(100vh-4rem)] px-4 py-12">
@@ -174,17 +175,7 @@ export default function RumorDetailPage() {
 
               <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
                 <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 mb-1">
-                  <Shield className="w-4 h-4" />
-                  <span className="text-xs">Within Area</span>
-                </div>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {withinAreaProgress}%
-                </p>
-              </div>
-
-              <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
-                <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 mb-1">
-                  <TrendingUp className="w-4 h-4" />
+                  <CheckCircle className="w-4 h-4" />
                   <span className="text-xs">Fact Votes</span>
                 </div>
                 <p className="text-2xl font-bold text-green-600 dark:text-green-400">
@@ -201,7 +192,42 @@ export default function RumorDetailPage() {
                   {stats.lieVotes}
                 </p>
               </div>
+
+              <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 mb-1">
+                  <Shield className="w-4 h-4" />
+                  <span className="text-xs">Under Area</span>
+                </div>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {stats.underAreaVotes}
+                </p>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                  {underAreaProgress}%
+                </p>
+              </div>
             </div>
+
+            {/* Additional stats row for not under area votes if available */}
+            {stats.notUnderAreaVotes !== undefined && stats.notUnderAreaVotes > 0 && (
+              <div className="mb-6">
+                <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
+                      <Users className="w-4 h-4" />
+                      <span className="text-sm">Not Under Area Votes</span>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xl font-bold text-gray-900 dark:text-white">
+                        {stats.notUnderAreaVotes}
+                      </p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                        {notUnderAreaProgress}%
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Timer */}
             {!rumor.isLocked && !rumor.isFinal && (

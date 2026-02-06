@@ -104,8 +104,11 @@ export default function ProfilePage() {
                   </div>
                   <div>
                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-                      {user?.universityId}
+                      Anonymous User
                     </h2>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                      {secretKey ? `Key: ${secretKey.substring(0, 16)}...` : 'No key available'}
+                    </p>
                     <div className="flex items-center space-x-2">
                       <Badge variant="info">{user?.area}</Badge>
                       <Badge

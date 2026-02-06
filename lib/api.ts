@@ -26,13 +26,8 @@ export const authAPI = {
     return response.data;
   },
 
-  register: async (universityId: string, password: string, area: string): Promise<{ secretKey: string; profile: User; message: string }> => {
-    const response = await api.post('/auth/register', { universityId, password, area });
-    return response.data;
-  },
-
-  recover: async (universityId: string, password: string): Promise<{ secretKey: string; message: string }> => {
-    const response = await api.post('/auth/recover', { universityId, password });
+  register: async (area: string): Promise<{ secretKey: string; profile: User; message: string }> => {
+    const response = await api.post('/auth/register', { area });
     return response.data;
   },
 

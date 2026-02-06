@@ -2,9 +2,9 @@ export type AreaOfVote = 'SEECS' | 'NBS' | 'ASAB' | 'SINES' | 'SCME' | 'S3H' | '
 
 export interface User {
   id: string;
-  universityId: string;
-  secretKey: string;
+  secretKey?: string;
   area: AreaOfVote;
+  points?: number;
   isBlocked: boolean;
   createdAt: string;
 }
@@ -30,7 +30,8 @@ export interface Rumor {
     lie: number;
   };
   totalVotes: number;
-  withinAreaVotes: number;
+  underAreaVotes: number;
+  notUnderAreaVotes?: number;
   requiredWithinAreaPercentage: number;
 }
 
@@ -49,7 +50,8 @@ export interface VoteStats {
   lieVotes: number;
   factWeight: number;
   lieWeight: number;
-  withinAreaVotes: number;
+  underAreaVotes: number;
+  notUnderAreaVotes: number;
   progress: number;
 }
 
