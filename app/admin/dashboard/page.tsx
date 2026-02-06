@@ -1,26 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
-import Link from 'next/link';
+import React, { useEffect, useState } from 'react';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import { adminAPI } from '@/lib/api';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
-import { 
-  Shield, 
-  Users, 
-  MessageSquare, 
-  Vote, 
-  Ban,
-  Database,
-  LogOut,
-  TrendingUp,
-  CheckCircle,
-  XCircle,
-  Activity
-} from 'lucide-react';
+import Modal from '@/components/ui/Modal';
+import { Users, FileText, Vote, Box, RefreshCw, UserCheck, UserX, Unlock, AlertTriangle, Calendar } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface AdminStats {
@@ -43,253 +29,301 @@ interface AdminStats {
   };
 }
 
+interface BlockedProfile {
+  secretKey: string;
+  isBlocked: boolean;
+  createdAt: string;
+}
+
 export default function AdminDashboardPage() {
-  const router = useRouter();
-  const { isAuthenticated, isLoading, verifyAdmin, logout, admin } = useAdminAuth();
+  const { admin } = useAdminAuth();
   const [stats, setStats] = useState<AdminStats | null>(null);
-  const [loadingStats, setLoadingStats] = useState(true);
+  const [blockedUsers, setBlockedUsers] = useState<BlockedProfile[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<BlockedProfile | null>(null);
+  const [showUnblockModal, setShowUnblockModal] = useState(false);
+  const [isUnblocking, setIsUnblocking] = useState(false);
 
-  // Verify admin on mount
-  useEffect(() => {
-    const checkAuth = async () => {
-      if (!isLoading) {
-        if (!isAuthenticated) {
-          router.push('/admin/login');
-        } else {
-          const valid = await verifyAdmin();
-          if (!valid) {
-            router.push('/admin/login');
-          }
-        }
+  const fetchData = async (showToast = false) => {
+    try {
+      if (showToast) setIsRefreshing(true);
+      const [statsData, blockedData] = await Promise.all([
+        adminAPI.getStats(),
+        adminAPI.getBlockedUsers(),
+      ]);
+      setStats(statsData);
+      setBlockedUsers(blockedData.blockedProfiles);
+      if (showToast) {
+        toast.success('Data refreshed');
       }
-    };
-    checkAuth();
-  }, [isLoading, isAuthenticated, router, verifyAdmin]);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to load data');
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  };
 
-  // Load stats
   useEffect(() => {
-    const loadStats = async () => {
-      if (isAuthenticated) {
-        try {
-          const data = await adminAPI.getStats();
-          setStats(data);
-        } catch (error: any) {
-          toast.error('Failed to load statistics');
-          console.error('Stats error:', error);
-        } finally {
-          setLoadingStats(false);
-        }
-      }
-    };
-    loadStats();
-  }, [isAuthenticated]);
+    fetchData();
+    
+    // Auto-refresh every 30 seconds
+    const interval = setInterval(() => {
+      fetchData();
+    }, 30000);
 
-  if (isLoading || loadingStats) {
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleUnblock = async () => {
+    if (!selectedUser) return;
+
+    setIsUnblocking(true);
+    try {
+      await adminAPI.unblockUser(selectedUser.secretKey);
+      toast.success('User unblocked successfully');
+      setShowUnblockModal(false);
+      setSelectedUser(null);
+      fetchData();
+    } catch (error: any) {
+      const message = error.response?.data?.message || 'Failed to unblock user';
+      toast.error(message);
+    } finally {
+      setIsUnblocking(false);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const truncateKey = (key: string) => {
+    return `${key.substring(0, 16)}...${key.substring(key.length - 8)}`;
+  };
+
+  if (isLoading) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Loading admin dashboard...</p>
-        </div>
+      <div className="flex items-center justify-center h-96">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
-  }
-
-  if (!isAuthenticated || !stats) {
-    return null;
   }
 
   const statCards = [
     {
       title: 'Total Users',
-      value: stats.users.total,
+      value: stats?.users.total || 0,
       icon: Users,
-      color: 'from-blue-600 to-blue-700',
-      textColor: 'text-blue-600 dark:text-blue-400',
-      bgColor: 'bg-blue-50 dark:bg-blue-900/20',
+      color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
+      subtitle: `${stats?.users.totalProfiles || 0} profiles`,
     },
     {
       title: 'Active Users',
-      value: stats.users.active,
-      icon: CheckCircle,
-      color: 'from-green-600 to-green-700',
-      textColor: 'text-green-600 dark:text-green-400',
-      bgColor: 'bg-green-50 dark:bg-green-900/20',
+      value: stats?.users.active || 0,
+      icon: UserCheck,
+      color: 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300',
+      subtitle: 'Currently active',
     },
     {
       title: 'Blocked Users',
-      value: stats.users.blocked,
-      icon: Ban,
-      color: 'from-red-600 to-red-700',
-      textColor: 'text-red-600 dark:text-red-400',
-      bgColor: 'bg-red-50 dark:bg-red-900/20',
+      value: stats?.users.blocked || 0,
+      icon: UserX,
+      color: 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300',
+      subtitle: 'Restricted accounts',
     },
     {
       title: 'Total Rumors',
-      value: stats.rumors.total,
-      icon: MessageSquare,
-      color: 'from-purple-600 to-purple-700',
-      textColor: 'text-purple-600 dark:text-purple-400',
-      bgColor: 'bg-purple-50 dark:bg-purple-900/20',
-    },
-    {
-      title: 'Active Rumors',
-      value: stats.rumors.active,
-      icon: Activity,
-      color: 'from-orange-600 to-orange-700',
-      textColor: 'text-orange-600 dark:text-orange-400',
-      bgColor: 'bg-orange-50 dark:bg-orange-900/20',
-    },
-    {
-      title: 'Finalized Rumors',
-      value: stats.rumors.finalized,
-      icon: CheckCircle,
-      color: 'from-teal-600 to-teal-700',
-      textColor: 'text-teal-600 dark:text-teal-400',
-      bgColor: 'bg-teal-50 dark:bg-teal-900/20',
+      value: stats?.rumors.total || 0,
+      icon: FileText,
+      color: 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300',
+      subtitle: `${stats?.rumors.active || 0} active, ${stats?.rumors.finalized || 0} finalized`,
     },
     {
       title: 'Active Votes',
-      value: stats.votes.active,
+      value: stats?.votes.active || 0,
       icon: Vote,
-      color: 'from-indigo-600 to-indigo-700',
-      textColor: 'text-indigo-600 dark:text-indigo-400',
-      bgColor: 'bg-indigo-50 dark:bg-indigo-900/20',
+      color: 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300',
+      subtitle: 'Ongoing voting',
     },
     {
       title: 'Blockchain Blocks',
-      value: stats.blockchain.totalBlocks,
-      icon: Database,
-      color: 'from-cyan-600 to-cyan-700',
-      textColor: 'text-cyan-600 dark:text-cyan-400',
-      bgColor: 'bg-cyan-50 dark:bg-cyan-900/20',
+      value: stats?.blockchain.totalBlocks || 0,
+      icon: Box,
+      color: 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300',
+      subtitle: 'Immutable records',
     },
   ];
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] py-8 px-4">
-      <div className="max-w-7xl mx-auto">
-        {/* Admin Mode Warning Banner */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8 p-4 bg-red-600 text-white rounded-xl shadow-lg"
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Shield className="w-6 h-6" />
-              <div>
-                <p className="font-bold text-lg">Admin Mode Active</p>
-                <p className="text-sm text-red-100">
-                  Logged in since: {new Date(admin?.lastLogin || '').toLocaleString()}
-                </p>
-              </div>
-            </div>
-            <Button
-              onClick={logout}
-              variant="outline"
-              className="bg-white/10 hover:bg-white/20 text-white border-white/30"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Logout
-            </Button>
-          </div>
-        </motion.div>
-
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <h1 className="text-4xl font-black text-gray-900 dark:text-white mb-2">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             Admin Dashboard
           </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-400">
-            System overview and statistics
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            System statistics and user management
           </p>
-        </motion.div>
-
-        {/* Stats Grid */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.1 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+        </div>
+        <button
+          onClick={() => fetchData(true)}
+          disabled={isRefreshing}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white rounded-lg transition-colors disabled:opacity-50"
         >
-          {statCards.map((stat, index) => {
-            const Icon = stat.icon;
-            return (
-              <motion.div
-                key={stat.title}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 + index * 0.05 }}
-              >
-                <Card hover className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className={`p-3 rounded-xl ${stat.bgColor}`}>
-                      <Icon className={`w-6 h-6 ${stat.textColor}`} />
-                    </div>
-                  </div>
-                  <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+          <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          Refresh
+        </button>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {statCards.map((stat, index) => {
+          const Icon = stat.icon;
+          
+          return (
+            <Card key={index} hover={false} className="p-6">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                     {stat.title}
-                  </h3>
-                  <p className="text-3xl font-black text-gray-900 dark:text-white">
+                  </p>
+                  <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
                     {stat.value.toLocaleString()}
                   </p>
-                </Card>
-              </motion.div>
-            );
-          })}
-        </motion.div>
-
-        {/* Quick Actions */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-            Quick Actions
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Link href="/admin/blocked-users">
-              <Card hover className="p-6 cursor-pointer transition-all hover:shadow-lg">
-                <div className="flex items-center gap-4">
-                  <div className="p-4 rounded-xl bg-red-50 dark:bg-red-900/20">
-                    <Ban className="w-8 h-8 text-red-600 dark:text-red-400" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
-                      Manage Blocked Users
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-400">
-                      View and unblock users ({stats.users.blocked} blocked)
-                    </p>
-                  </div>
-                </div>
-              </Card>
-            </Link>
-
-            <Card hover className="p-6 opacity-50 cursor-not-allowed">
-              <div className="flex items-center gap-4">
-                <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-900/20">
-                  <TrendingUp className="w-8 h-8 text-gray-600 dark:text-gray-400" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
-                    System Analytics
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    Coming soon
+                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                    {stat.subtitle}
                   </p>
+                </div>
+                <div className={`p-3 rounded-lg ${stat.color}`}>
+                  <Icon className="w-6 h-6" />
                 </div>
               </div>
             </Card>
-          </div>
-        </motion.div>
+          );
+        })}
       </div>
+
+      {/* Blocked Users Section */}
+      {blockedUsers.length > 0 && (
+        <Card hover={false} className="overflow-hidden">
+          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+              Blocked Users ({blockedUsers.length})
+            </h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 dark:bg-gray-800">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Secret Key
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Created At
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                {blockedUsers.map((user, index) => (
+                  <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <code className="text-sm font-mono text-gray-900 dark:text-gray-100">
+                        {truncateKey(user.secretKey)}
+                      </code>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                        <Calendar className="w-4 h-4" />
+                        {formatDate(user.createdAt)}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedUser(user);
+                          setShowUnblockModal(true);
+                        }}
+                        className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 border-blue-600 hover:border-blue-700 dark:border-blue-400"
+                      >
+                        <Unlock className="w-4 h-4 mr-1" />
+                        Unblock
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
+
+      {/* Unblock Confirmation Modal */}
+      <Modal
+        isOpen={showUnblockModal}
+        onClose={() => !isUnblocking && setShowUnblockModal(false)}
+        title="Confirm Unblock User"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <div className="flex items-start gap-3">
+            <div className="p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
+              <AlertTriangle className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+            </div>
+            <div className="flex-1">
+              <p className="text-gray-700 dark:text-gray-300 mb-3">
+                Are you sure you want to unblock this user account?
+              </p>
+              {selectedUser && (
+                <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Secret Key:</p>
+                  <code className="text-sm font-mono text-gray-900 dark:text-gray-100 break-all">
+                    {truncateKey(selectedUser.secretKey)}
+                  </code>
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="flex gap-3 pt-2">
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => setShowUnblockModal(false)}
+              disabled={isUnblocking}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              size="lg"
+              onClick={handleUnblock}
+              isLoading={isUnblocking}
+              className="flex-1 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+            >
+              <Unlock className="w-4 h-4 mr-2" />
+              Unblock User
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Auto-refresh indicator */}
+      <p className="text-xs text-gray-500 dark:text-gray-600 text-center">
+        Auto-refresh every 30 seconds
+      </p>
     </div>
   );
 }

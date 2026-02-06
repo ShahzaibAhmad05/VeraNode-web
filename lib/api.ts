@@ -21,7 +21,12 @@ api.interceptors.request.use((config) => {
 
 // Auth APIs
 export const authAPI = {
-  login: async (secretKey: string): Promise<{ token: string; profile: User }> => {
+  login: async (secretKey: string): Promise<{ 
+    token: string; 
+    userType?: 'admin' | 'student';
+    profile?: User;
+    admin?: any;
+  }> => {
     const response = await api.post('/auth/login', { secretKey });
     return response.data;
   },
@@ -110,7 +115,7 @@ const adminAPI_instance = axios.create({
   },
 });
 
-// Admin interceptor to add admin token
+// Admin interceptor to add admin token from sessionStorage
 adminAPI_instance.interceptors.request.use((config) => {
   const token = sessionStorage.getItem('admin_token');
   if (token) {
@@ -152,11 +157,6 @@ interface AdminStats {
 }
 
 export const adminAPI = {
-  login: async (adminKey: string): Promise<{ success: boolean; token: string; admin: Admin }> => {
-    const response = await adminAPI_instance.post('/admin/login', { adminKey });
-    return response.data;
-  },
-
   verify: async (): Promise<{ success: boolean; admin: Admin }> => {
     const response = await adminAPI_instance.get('/admin/verify');
     return response.data;

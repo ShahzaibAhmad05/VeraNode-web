@@ -67,20 +67,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await authAPI.login(secretKey);
       
-      localStorage.setItem('auth_token', response.token);
-      localStorage.setItem('user_data', JSON.stringify(response.profile));
-      localStorage.setItem('secret_key', secretKey);
-      
-      setUser(response.profile);
-      setSecretKey(secretKey);
-      
-      toast.success('Login successful!', {
-        iconTheme: {
-          primary: '#10b981',
-          secondary: '#fff',
-        },
-      });
-      router.push('/dashboard');
+      // Check if this is an admin login
+      if (response.userType === 'admin') {
+        // Handle admin login
+        sessionStorage.setItem('admin_token', response.token);
+        if (response.admin) {
+          sessionStorage.setItem('admin_data', JSON.stringify(response.admin));
+        }
+        
+        toast.success('Admin login successful!', {
+          iconTheme: {
+            primary: '#10b981',
+            secondary: '#fff',
+          },
+        });
+        
+        router.push('/admin/dashboard');
+      } else {
+        // Handle student login
+        if (response.profile) {
+          localStorage.setItem('auth_token', response.token);
+          localStorage.setItem('user_data', JSON.stringify(response.profile));
+          localStorage.setItem('secret_key', secretKey);
+          
+          setUser(response.profile);
+          setSecretKey(secretKey);
+          
+          toast.success('Login successful!', {
+            iconTheme: {
+              primary: '#10b981',
+              secondary: '#fff',
+            },
+          });
+          
+          router.push('/dashboard');
+        }
+      }
     } catch (error: any) {
       const message = error.response?.data?.message || 'Login failed';
       toast.error(message);

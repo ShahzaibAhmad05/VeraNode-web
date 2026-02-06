@@ -39,7 +39,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="fixed inset-0 top-16 flex items-center justify-center px-4 overflow-hidden">
+    <div className="fixed inset-0 top-10 flex items-center justify-center px-4 overflow-hidden">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -98,7 +98,7 @@ export default function LoginPage() {
               type="submit"
               variant="primary"
               isLoading={isLoading}
-              className="w-full h-14 text-lg font-bold rounded-xl shadow-lg hover:shadow-xl transition-all"
+              className="w-full h-14 text-lg font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-250"
             >
               <LogIn className="w-5 h-5 mr-2" />
               Login

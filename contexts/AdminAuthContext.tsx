@@ -15,7 +15,6 @@ interface AdminAuthContextType {
   admin: Admin | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (adminKey: string) => Promise<void>;
   logout: () => void;
   verifyAdmin: () => Promise<boolean>;
 }
@@ -61,40 +60,12 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     loadAdmin();
   }, []);
 
-  const login = async (adminKey: string) => {
-    try {
-      const response = await adminAPI.login(adminKey);
-      
-      sessionStorage.setItem('admin_token', response.token);
-      sessionStorage.setItem('admin_data', JSON.stringify(response.admin));
-      
-      setAdmin(response.admin);
-      
-      toast.success('Admin login successful!', {
-        iconTheme: {
-          primary: '#10b981',
-          secondary: '#fff',
-        },
-      });
-      router.push('/admin/dashboard');
-    } catch (error: any) {
-      const message = error.response?.data?.message || 'Admin login failed';
-      toast.error(message);
-      throw error;
-    }
-  };
-
   const logout = () => {
     sessionStorage.removeItem('admin_token');
     sessionStorage.removeItem('admin_data');
     setAdmin(null);
-    toast.success('Admin logged out', {
-      iconTheme: {
-        primary: '#10b981',
-        secondary: '#fff',
-      },
-    });
-    router.push('/admin/login');
+    toast.success('Admin logged out');
+    router.push('/auth/login');
   };
 
   const verifyAdmin = async (): Promise<boolean> => {
@@ -117,7 +88,6 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
         admin,
         isLoading,
         isAuthenticated,
-        login,
         logout,
         verifyAdmin,
       }}

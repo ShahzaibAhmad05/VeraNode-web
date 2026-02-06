@@ -76,10 +76,9 @@ export default function CreateRumorPage() {
         // Continue even if auto-vote fails
       }
       
-      // Show success toast with green checkmark icon
+      // Show success toast
       toast.success('Rumor posted successfully!', {
         duration: 4000,
-        icon: '✓',
         style: {
           borderRadius: '8px',
           fontSize: '14px',
