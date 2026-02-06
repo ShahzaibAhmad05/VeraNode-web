@@ -39,7 +39,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12">
+    <div className="fixed inset-0 top-16 flex items-center justify-center px-4 overflow-hidden">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -48,16 +48,22 @@ export default function LoginPage() {
       >
         <Card hover={false} className="p-10">
           {/* Header */}
-          <div className="text-center mb-8">
-            <div className="w-20 h-20 bg-linear-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+          <div className="flex items-center gap-6 mb-8">
+            {/* Key Icon - Left */}
+            <div className="w-20 h-20 bg-linear-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shrink-0">
               <Key className="w-10 h-10 text-white" />
             </div>
-            <h1 className="text-4xl font-black text-gray-900 dark:text-white mb-3 tracking-tight">
-              Welcome Back
-            </h1>
-            <p className="text-lg text-gray-600 dark:text-gray-400">
-              Enter your secret key to continue
-            </p>
+            
+            {/* Welcome Text - Right */}
+            <div className="flex-1">
+              <h1 className="text-4xl font-black text-gray-900 dark:text-white mb-2 tracking-tight">
+                Welcome Back!
+              </h1>
+              <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                <Lock className="w-4 h-4" />
+                Login using Zero-Knowledge Authentication
+              </p>
+            </div>
           </div>
 
           {/* Error Message */}
@@ -100,54 +106,15 @@ export default function LoginPage() {
           </form>
 
           {/* Footer Links */}
-          <div className="mt-8 space-y-4">
-            {/* Warning about lost keys */}
-            <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl">
-              <div className="flex items-start justify-center space-x-2">
-                <AlertTriangle className="w-4 h-4 text-yellow-600 dark:text-yellow-400 shrink-0 mt-0.5" />
-                <p className="text-sm text-center text-yellow-900 dark:text-yellow-300 font-medium">
-                  <strong>Warning:</strong> Lost keys cannot be recovered. Keep your key safe!
-                </p>
-              </div>
-            </div>
-            
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300 dark:border-gray-700"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                  New to VeraNode?
-                </span>
-              </div>
-            </div>
-
-            <Link href="/auth/register">
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full h-12 text-base font-bold rounded-xl"
-              >
+          <div className="mt-8 text-center">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              New to VeraNode?{' '}
+              <Link href="/auth/register" className="text-blue-600 dark:text-blue-400 hover:underline font-semibold">
                 Create Account
-              </Button>
-            </Link>
-          </div>
-        </Card>
-
-        {/* Privacy Info */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl"
-        >
-          <div className="flex items-start justify-center space-x-2">
-            <Lock className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
-            <p className="text-sm text-center text-blue-900 dark:text-blue-300">
-              <strong>Zero-Knowledge Authentication</strong> - Your identity remains completely anonymous
+              </Link>
             </p>
           </div>
-        </motion.div>
+        </Card>
       </motion.div>
     </div>
   );
