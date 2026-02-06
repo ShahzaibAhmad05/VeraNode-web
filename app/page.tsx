@@ -86,15 +86,12 @@ export default function HomePage() {
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              Why Choose VeraNode?
+              Why Use VeraNode?
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-400">
               Powerful features for transparent truth discovery
             </p>
           </div>
-
-          {/* Scroll Progress Bar */}
-          <ScrollProgress />
 
           <div className="space-y-20">
             {/* Pair features in groups of 2 */}

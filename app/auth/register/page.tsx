@@ -10,7 +10,9 @@ import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Card from '@/components/ui/Card';
 import Modal from '@/components/ui/Modal';
-import { UserPlus, Copy, CheckCircle } from 'lucide-react';
+import PasswordStrength from '@/components/ui/PasswordStrength';
+import { SecurityBadgeGroup } from '@/components/ui/SecurityBadge';
+import { UserPlus, Copy, CheckCircle, Shield, Info, AlertTriangle } from 'lucide-react';
 import { copyToClipboard } from '@/lib/utils';
 import type { AreaOfVote } from '@/types';
 
@@ -26,6 +28,7 @@ export default function RegisterPage() {
   const [showSecretKeyModal, setShowSecretKeyModal] = useState(false);
   const [generatedSecretKey, setGeneratedSecretKey] = useState('');
   const [keyCopied, setKeyCopied] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   // Redirect if already authenticated
   React.useEffect(() => {
@@ -49,13 +52,28 @@ export default function RegisterPage() {
     setError('');
 
     // Validation
+    if (!acceptedTerms) {
+      setError('You must accept the Terms of Service and Privacy Policy to continue');
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       return;
     }
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters long');
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters long');
+      return;
+    }
+
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const hasSpecialChar = /[^A-Za-z0-9]/.test(password);
+
+    if (!hasUpperCase || !hasLowerCase || !hasNumber || !hasSpecialChar) {
+      setError('Password must meet all security requirements');
       return;
     }
 
@@ -100,7 +118,7 @@ export default function RegisterPage() {
         >
           <Card hover={false} className="p-8">
             {/* Header */}
-            <div className="text-center mb-8">
+            <div className="text-center mb-6">
               <div className="w-16 h-16 bg-blue-600 dark:bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <UserPlus className="w-8 h-8 text-white" />
               </div>
@@ -112,6 +130,11 @@ export default function RegisterPage() {
               </p>
             </div>
 
+            {/* Security Badges */}
+            <div className="mb-6">
+              <SecurityBadgeGroup />
+            </div>
+
             {/* Error Message */}
             {error && (
               <motion.div
@@ -119,7 +142,10 @@ export default function RegisterPage() {
                 animate={{ opacity: 1, height: 'auto' }}
                 className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg"
               >
-                <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+                  <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
+                </div>
               </motion.div>
             )}
 
@@ -144,16 +170,23 @@ export default function RegisterPage() {
                 disabled={isLoading}
               />
 
-              <Input
-                label="Password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Create a strong password"
-                required
-                disabled={isLoading}
-                helperText="Minimum 6 characters"
-              />
+              <div>
+                <Input
+                  label="Password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Create a strong password"
+                  required
+                  disabled={isLoading}
+                  showPasswordToggle={true}
+                />
+                {password && (
+                  <div className="mt-3">
+                    <PasswordStrength password={password} />
+                  </div>
+                )}
+              </div>
 
               <Input
                 label="Confirm Password"
@@ -163,7 +196,57 @@ export default function RegisterPage() {
                 placeholder="Confirm your password"
                 required
                 disabled={isLoading}
+                showPasswordToggle={true}
+                error={confirmPassword && password !== confirmPassword ? 'Passwords do not match' : undefined}
               />
+
+              {/* Terms and Privacy */}
+              <div className="space-y-4">
+                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                  <div className="flex items-start gap-2">
+                    <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm text-blue-900 dark:text-blue-300 font-medium mb-1">
+                        How we protect you:
+                      </p>
+                      <ul className="text-xs text-blue-800 dark:text-blue-400 space-y-1">
+                        <li>• Zero-knowledge cryptography for anonymous voting</li>
+                        <li>• Passwords hashed with bcrypt (industry standard)</li>
+                        <li>• No personal data stored beyond university ID</li>
+                        <li>• Blockchain ensures vote integrity and transparency</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <label className="flex items-start gap-3 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    checked={acceptedTerms}
+                    onChange={(e) => setAcceptedTerms(e.target.checked)}
+                    className="mt-1 w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    required
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                    I accept the{' '}
+                    <button
+                      type="button"
+                      className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                      onClick={() => window.open('/terms', '_blank')}
+                    >
+                      Terms of Service
+                    </button>
+                    {' '}and{' '}
+                    <button
+                      type="button"
+                      className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                      onClick={() => window.open('/privacy', '_blank')}
+                    >
+                      Privacy Policy
+                    </button>
+                  </span>
+                </label>
+              </div>
 
               <Button
                 type="submit"
@@ -171,8 +254,10 @@ export default function RegisterPage() {
                 size="lg"
                 isLoading={isLoading}
                 className="w-full"
+                disabled={!acceptedTerms}
               >
-                Create Account
+                <Shield className="w-4 h-4 mr-2" />
+                Create Secure Account
               </Button>
             </form>
 

@@ -105,8 +105,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
+      // Call API logout (will handle errors internally)
       await authAPI.logout();
-      
+    } catch (error) {
+      console.warn('Logout had issues, but continuing:', error);
+    } finally {
+      // Always clear state and redirect, regardless of API errors
       localStorage.removeItem('auth_token');
       localStorage.removeItem('user_data');
       localStorage.removeItem('secret_key');
@@ -116,9 +120,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       toast.success('Logged out successfully');
       router.push('/auth/login');
-    } catch (error) {
-      console.error('Logout error:', error);
-      toast.error('Logout failed');
     }
   };
 

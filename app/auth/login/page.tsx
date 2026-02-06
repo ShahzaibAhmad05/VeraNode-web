@@ -8,7 +8,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
-import { LogIn } from 'lucide-react';
+import { SecurityBadgeGroup } from '@/components/ui/SecurityBadge';
+import { LogIn, Shield, Lock, AlertTriangle } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -17,6 +18,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [loginAttempts, setLoginAttempts] = useState(0);
 
   // Redirect if already authenticated
   React.useEffect(() => {
@@ -34,6 +36,7 @@ export default function LoginPage() {
       await login(universityId, password);
       // Navigation is handled in AuthContext after successful login
     } catch (err: any) {
+      setLoginAttempts(prev => prev + 1);
       setError(err.response?.data?.message || 'Login failed. Please try again.');
       setIsLoading(false);
     }
@@ -49,7 +52,7 @@ export default function LoginPage() {
       >
         <Card hover={false} className="p-8">
           {/* Header */}
-          <div className="text-center mb-8">
+          <div className="text-center mb-6">
             <div className="w-16 h-16 bg-blue-600 dark:bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
               <LogIn className="w-8 h-8 text-white" />
             </div>
@@ -61,6 +64,11 @@ export default function LoginPage() {
             </p>
           </div>
 
+          {/* Security Badges */}
+          <div className="mb-6">
+            <SecurityBadgeGroup />
+          </div>
+
           {/* Error Message */}
           {error && (
             <motion.div
@@ -68,7 +76,17 @@ export default function LoginPage() {
               animate={{ opacity: 1, height: 'auto' }}
               className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg"
             >
-              <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
+                  {loginAttempts >= 3 && (
+                    <p className="text-xs text-red-700 dark:text-red-400 mt-1">
+                      Multiple failed attempts detected. Please verify your credentials.
+                    </p>
+                  )}
+                </div>
+              </div>
             </motion.div>
           )}
 
@@ -92,6 +110,7 @@ export default function LoginPage() {
               placeholder="Enter your password"
               required
               disabled={isLoading}
+              showPasswordToggle={true}
             />
 
             <Button
@@ -117,17 +136,35 @@ export default function LoginPage() {
           </div>
         </Card>
 
-        {/* Info Box */}
+        {/* Security Info Boxes */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg"
+          className="mt-6 space-y-3"
         >
-          <p className="text-sm text-blue-800 dark:text-blue-300">
-            <strong>Note:</strong> Your identity is protected through cryptographic keys.
-            Make sure to save your secret key after registration.
-          </p>
+          <div className="p-4 bg-linear-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <div className="flex items-start gap-3">
+              <Shield className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-blue-900 dark:text-blue-300 mb-1">
+                  🔐 Your Privacy is Protected
+                </p>
+                <p className="text-xs text-blue-800 dark:text-blue-400">
+                  All data is encrypted end-to-end. Your votes are anonymous and cannot be traced back to you.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-3 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg">
+            <div className="flex items-start gap-2">
+              <Lock className="w-4 h-4 text-gray-600 dark:text-gray-400 shrink-0 mt-0.5" />
+              <p className="text-xs text-gray-700 dark:text-gray-300">
+                <strong>Secure Connection:</strong> This site uses bank-level encryption (TLS 1.3) to protect your data.
+              </p>
+            </div>
+          </div>
         </motion.div>
       </motion.div>
     </div>

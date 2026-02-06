@@ -37,9 +37,18 @@ export const authAPI = {
   },
 
   logout: async (): Promise<void> => {
-    await api.post('/auth/logout');
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('user_data');
+    try {
+      // Try to call backend logout endpoint (optional)
+      await api.post('/auth/logout');
+    } catch (error) {
+      // Ignore API errors - logout is primarily a client-side operation
+      console.warn('Backend logout failed, continuing with local logout:', error);
+    } finally {
+      // Always clear localStorage regardless of API call result
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('user_data');
+      localStorage.removeItem('secret_key');
+    }
   },
 };
 
