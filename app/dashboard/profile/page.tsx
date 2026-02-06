@@ -8,7 +8,7 @@ import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import Modal from '@/components/ui/Modal';
-import { User, Key, Copy, CheckCircle, Shield, TrendingUp, Award, AlertCircle } from 'lucide-react';
+import { User, Key, Copy, CheckCircle, Shield, TrendingUp, Award, AlertCircle, AlertTriangle } from 'lucide-react';
 import { userAPI } from '@/lib/api';
 import type { Rumor, UserStats } from '@/types';
 import { copyToClipboard, formatRelativeTime } from '@/lib/utils';
@@ -272,17 +272,22 @@ export default function ProfilePage() {
       <Modal
         isOpen={showSecretKeyModal}
         onClose={() => setShowSecretKeyModal(false)}
-        title="🔑 Your Secret Key"
+        title="Your Secret Key"
         size="md"
       >
         <div className="space-y-4">
           <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-            <p className="text-sm text-yellow-800 dark:text-yellow-300 font-medium mb-2">
-              ⚠️ Keep this key safe!
-            </p>
-            <p className="text-sm text-yellow-800 dark:text-yellow-300">
-              This key is used to maintain your anonymity and reputation. Do not share it with anyone.
-            </p>
+            <div className="flex items-start space-x-2">
+              <AlertTriangle className="w-4 h-4 text-yellow-600 dark:text-yellow-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm text-yellow-800 dark:text-yellow-300 font-medium mb-2">
+                  Keep this key safe!
+                </p>
+                <p className="text-sm text-yellow-800 dark:text-yellow-300">
+                  This key is used to maintain your anonymity and reputation. Do not share it with anyone.
+                </p>
+              </div>
+            </div>
           </div>
 
           <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4">

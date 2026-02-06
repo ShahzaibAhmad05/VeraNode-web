@@ -9,7 +9,7 @@ import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
 import Card from '@/components/ui/Card';
 import Modal from '@/components/ui/Modal';
-import { UserPlus, Copy, CheckCircle, AlertTriangle, Shield, Key } from 'lucide-react';
+import { UserPlus, Copy, CheckCircle, AlertTriangle, Shield, Key, Lightbulb } from 'lucide-react';
 import { copyToClipboard } from '@/lib/utils';
 import type { AreaOfVote } from '@/types';
 
@@ -206,9 +206,12 @@ export default function RegisterPage() {
 
           {/* Warning Box */}
           <div className="bg-linear-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border-2 border-yellow-400 dark:border-yellow-600 rounded-xl p-6">
-            <p className="text-lg text-yellow-900 dark:text-yellow-300 font-bold mb-3 text-center">
-              ⚠️ SAVE YOUR SECRET KEY - it cannot be recovered or regenerated!
-            </p>
+            <div className="flex items-start justify-center space-x-2 mb-3">
+              <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 shrink-0 mt-0.5" />
+              <p className="text-lg text-yellow-900 dark:text-yellow-300 font-bold text-center">
+                SAVE YOUR SECRET KEY - it cannot be recovered or regenerated!
+              </p>
+            </div>
             <ul className="text-sm text-yellow-800 dark:text-yellow-400 space-y-2 list-disc list-inside">
               <li>Your secret key maintains your anonymity</li>
               <li>This is your ONLY way to login</li>
@@ -246,9 +249,12 @@ export default function RegisterPage() {
 
           {/* Info Box */}
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
-            <p className="text-sm text-blue-900 dark:text-blue-300 text-center">
-              💡 <strong>Tip:</strong> Store this in a password manager or save it in a secure place
-            </p>
+            <div className="flex items-start justify-center space-x-2">
+              <Lightbulb className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+              <p className="text-sm text-blue-900 dark:text-blue-300 text-center">
+                <strong>Tip:</strong> Store this in a password manager or save it in a secure place
+              </p>
+            </div>
           </div>
 
           <Button

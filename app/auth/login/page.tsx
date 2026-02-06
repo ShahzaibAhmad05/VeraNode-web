@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
-import { LogIn, Key, AlertTriangle } from 'lucide-react';
+import { LogIn, Key, AlertTriangle, Lock } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -103,9 +103,12 @@ export default function LoginPage() {
           <div className="mt-8 space-y-4">
             {/* Warning about lost keys */}
             <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl">
-              <p className="text-sm text-center text-yellow-900 dark:text-yellow-300 font-medium">
-                ⚠️ <strong>Warning:</strong> Lost keys cannot be recovered. Keep your key safe!
-              </p>
+              <div className="flex items-start justify-center space-x-2">
+                <AlertTriangle className="w-4 h-4 text-yellow-600 dark:text-yellow-400 shrink-0 mt-0.5" />
+                <p className="text-sm text-center text-yellow-900 dark:text-yellow-300 font-medium">
+                  <strong>Warning:</strong> Lost keys cannot be recovered. Keep your key safe!
+                </p>
+              </div>
             </div>
             
             <div className="relative">
@@ -138,9 +141,12 @@ export default function LoginPage() {
           transition={{ delay: 0.2 }}
           className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl"
         >
-          <p className="text-sm text-center text-blue-900 dark:text-blue-300">
-            🔒 <strong>Zero-Knowledge Authentication</strong> - Your identity remains completely anonymous
-          </p>
+          <div className="flex items-start justify-center space-x-2">
+            <Lock className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+            <p className="text-sm text-center text-blue-900 dark:text-blue-300">
+              <strong>Zero-Knowledge Authentication</strong> - Your identity remains completely anonymous
+            </p>
+          </div>
         </motion.div>
       </motion.div>
     </div>

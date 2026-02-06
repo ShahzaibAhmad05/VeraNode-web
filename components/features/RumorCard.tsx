@@ -7,7 +7,7 @@ import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import type { Rumor } from '@/types';
 import { formatRelativeTime, formatTimeRemaining, calculateTimeRemaining } from '@/lib/utils';
-import { Clock, TrendingUp, Users, Lock, CheckCircle, XCircle } from 'lucide-react';
+import { Clock, TrendingUp, Users, Lock, CheckCircle, XCircle, Check, X } from 'lucide-react';
 
 interface RumorCardProps {
   rumor: Rumor;
@@ -135,15 +135,23 @@ const RumorCard: React.FC<RumorCardProps> = ({ rumor }) => {
             }`}
           >
             <p
-              className={`text-sm font-medium ${
+              className={`text-sm font-medium flex items-center gap-1 ${
                 rumor.finalDecision === 'FACT'
                   ? 'text-green-800 dark:text-green-300'
                   : 'text-red-800 dark:text-red-300'
               }`}
             >
-              {rumor.finalDecision === 'FACT'
-                ? '✓ Community verified this as a FACT'
-                : '✗ Community confirmed this as a LIE'}
+              {rumor.finalDecision === 'FACT' ? (
+                <>
+                  <Check className="w-4 h-4" />
+                  <span>Community verified this as a FACT</span>
+                </>
+              ) : (
+                <>
+                  <X className="w-4 h-4" />
+                  <span>Community confirmed this as a LIE</span>
+                </>
+              )}
             </p>
           </div>
         )}

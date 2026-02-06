@@ -9,7 +9,7 @@ import Textarea from '@/components/ui/Textarea';
 import Select from '@/components/ui/Select';
 import Card from '@/components/ui/Card';
 import Modal from '@/components/ui/Modal';
-import { PlusCircle, AlertCircle, CheckCircle, Sparkles } from 'lucide-react';
+import { PlusCircle, AlertCircle, CheckCircle, Sparkles, Check, X } from 'lucide-react';
 import { rumorAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 import type { AreaOfVote, AIValidation } from '@/types';
@@ -254,12 +254,16 @@ export default function CreateRumorPage() {
 
             {/* Details */}
             <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4">
-              <p className="text-sm text-gray-700 dark:text-gray-300">
+              <p className="text-sm text-gray-700 dark:text-gray-300 flex items-center gap-2">
                 <strong>Is Rumor:</strong>{' '}
                 {validationResult.isRumor ? (
-                  <span className="text-green-600 dark:text-green-400">Yes ✓</span>
+                  <span className="text-green-600 dark:text-green-400 flex items-center gap-1">
+                    Yes <Check className="w-4 h-4" />
+                  </span>
                 ) : (
-                  <span className="text-red-600 dark:text-red-400">No ✗</span>
+                  <span className="text-red-600 dark:text-red-400 flex items-center gap-1">
+                    No <X className="w-4 h-4" />
+                  </span>
                 )}
               </p>
               {validationResult.suggestedArea && (
