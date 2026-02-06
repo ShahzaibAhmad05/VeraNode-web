@@ -11,8 +11,9 @@ interface AuthContextType {
   secretKey: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (universityId: string, password: string) => Promise<void>;
-  register: (universityId: string, password: string, area: string) => Promise<void>;
+  login: (secretKey: string) => Promise<void>;
+  register: (universityId: string, password: string, area: string) => Promise<{ secretKey: string }>;
+  recover: (universityId: string, password: string) => Promise<{ secretKey: string }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -41,9 +42,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           
           // Verify token with backend
           try {
-            const verifiedUser = await authAPI.verifyToken();
-            setUser(verifiedUser);
-            localStorage.setItem('user_data', JSON.stringify(verifiedUser));
+            const { profile } = await authAPI.getProfile();
+            setUser(profile);
+            localStorage.setItem('user_data', JSON.stringify(profile));
           } catch (error) {
             // Token invalid, clear auth
             localStorage.removeItem('auth_token');
@@ -63,16 +64,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loadUser();
   }, []);
 
-  const login = async (universityId: string, password: string) => {
+  const login = async (secretKey: string) => {
     try {
-      const response = await authAPI.login(universityId, password);
+      const response = await authAPI.login(secretKey);
       
       localStorage.setItem('auth_token', response.token);
-      localStorage.setItem('user_data', JSON.stringify(response.user));
-      localStorage.setItem('secret_key', response.secretKey);
+      localStorage.setItem('user_data', JSON.stringify(response.profile));
+      localStorage.setItem('secret_key', secretKey);
       
-      setUser(response.user);
-      setSecretKey(response.secretKey);
+      setUser(response.profile);
+      setSecretKey(secretKey);
       
       toast.success('Login successful!');
       router.push('/dashboard');
@@ -87,17 +88,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await authAPI.register(universityId, password, area);
       
-      localStorage.setItem('auth_token', response.token);
-      localStorage.setItem('user_data', JSON.stringify(response.user));
-      localStorage.setItem('secret_key', response.secretKey);
-      
-      setUser(response.user);
-      setSecretKey(response.secretKey);
-      
-      toast.success('Registration successful! Please save your secret key.');
-      router.push('/dashboard');
+      // Don't auto-login after registration - user needs to save secret key first
+      // Just return the secret key to display in the UI
+      return { secretKey: response.secretKey };
     } catch (error: any) {
       const message = error.response?.data?.message || 'Registration failed';
+      toast.error(message);
+      throw error;
+    }
+  };
+
+  const recover = async (universityId: string, password: string) => {
+    try {
+      const response = await authAPI.recover(universityId, password);
+      toast.success('Secret key recovered successfully!');
+      return { secretKey: response.secretKey };
+    } catch (error: any) {
+      const message = error.response?.data?.message || 'Recovery failed';
       toast.error(message);
       throw error;
     }
@@ -125,9 +132,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshUser = async () => {
     try {
-      const verifiedUser = await authAPI.verifyToken();
-      setUser(verifiedUser);
-      localStorage.setItem('user_data', JSON.stringify(verifiedUser));
+      const { profile } = await authAPI.getProfile();
+      setUser(profile);
+      localStorage.setItem('user_data', JSON.stringify(profile));
     } catch (error) {
       console.error('Error refreshing user:', error);
     }
@@ -136,6 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider
       value={{
+        recover,
         user,
         secretKey,
         isLoading,

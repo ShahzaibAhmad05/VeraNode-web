@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import Button from '@/components/ui/Button';
-import { LogOut, Home, PlusCircle, User, Moon, Sun } from 'lucide-react';
+import { LogOut, Home, PlusCircle, Moon, Sun } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
 const Header: React.FC = () => {
@@ -53,7 +53,6 @@ const Header: React.FC = () => {
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: Home },
     { href: '/rumor/create', label: 'Post Rumor', icon: PlusCircle },
-    { href: '/dashboard/profile', label: 'Profile', icon: User },
   ];
 
   return (
@@ -118,14 +117,6 @@ const Header: React.FC = () => {
 
             {isAuthenticated ? (
               <>
-                <div className="hidden md:flex flex-col items-end">
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">
-                    {user?.universityId}
-                  </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {user?.area}
-                  </span>
-                </div>
                 <Button
                   variant="outline"
                   size="sm"

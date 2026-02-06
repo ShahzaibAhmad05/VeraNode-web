@@ -21,18 +21,23 @@ api.interceptors.request.use((config) => {
 
 // Auth APIs
 export const authAPI = {
-  login: async (universityId: string, password: string): Promise<{ user: User; token: string; secretKey: string }> => {
-    const response = await api.post('/auth/login', { universityId, password });
+  login: async (secretKey: string): Promise<{ token: string; profile: User }> => {
+    const response = await api.post('/auth/login', { secretKey });
     return response.data;
   },
 
-  register: async (universityId: string, password: string, area: string): Promise<{ user: User; token: string; secretKey: string }> => {
+  register: async (universityId: string, password: string, area: string): Promise<{ secretKey: string; profile: User; message: string }> => {
     const response = await api.post('/auth/register', { universityId, password, area });
     return response.data;
   },
 
-  verifyToken: async (): Promise<User> => {
-    const response = await api.get('/auth/verify');
+  recover: async (universityId: string, password: string): Promise<{ secretKey: string; message: string }> => {
+    const response = await api.post('/auth/recover', { universityId, password });
+    return response.data;
+  },
+
+  getProfile: async (): Promise<{ profile: User }> => {
+    const response = await api.get('/auth/profile');
     return response.data;
   },
 

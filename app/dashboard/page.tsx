@@ -9,9 +9,9 @@ import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import RumorCard from '@/components/features/RumorCard';
 import { ScrollReveal } from '@/components/ui/ScrollReveal';
-import { TrendingUp, Filter, PlusCircle, Users, Target, CheckCircle } from 'lucide-react';
-import { rumorAPI, userAPI } from '@/lib/api';
-import type { Rumor, UserStats } from '@/types';
+import { Filter, PlusCircle, AlertCircle } from 'lucide-react';
+import { rumorAPI } from '@/lib/api';
+import type { Rumor } from '@/types';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 
@@ -20,7 +20,6 @@ export default function DashboardPage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [rumors, setRumors] = useState<Rumor[]>([]);
   const [filteredRumors, setFilteredRumors] = useState<Rumor[]>([]);
-  const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'locked' | 'final'>('all');
   const [areaFilter, setAreaFilter] = useState<string>('all');
@@ -36,14 +35,10 @@ export default function DashboardPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [rumorsData, statsData] = await Promise.all([
-          rumorAPI.getAll(),
-          userAPI.getStats(),
-        ]);
+        const rumorsData = await rumorAPI.getAll();
 
         setRumors(Array.isArray(rumorsData) ? rumorsData : []);
         setFilteredRumors(Array.isArray(rumorsData) ? rumorsData : []);
-        setUserStats(statsData);
       } catch (error: any) {
         toast.error('Failed to load dashboard data');
         setRumors([]);
@@ -115,59 +110,9 @@ export default function DashboardPage() {
               Dashboard
             </h1>
             <p className="text-lg text-gray-600 dark:text-gray-400">
-              Welcome back, {user?.universityId}
+              Discover truth with complete anonymity
             </p>
           </div>
-
-          {/* Stats Grid */}
-          {userStats && (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-              <Card hover={false} className="bg-blue-600 dark:bg-blue-500 text-white border-0">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-blue-100 dark:text-blue-50 text-sm mb-1">Rumors Posted</p>
-                    <p className="text-3xl font-bold">{userStats.rumorsPosted}</p>
-                  </div>
-                  <PlusCircle className="w-10 h-10 text-blue-200" />
-                </div>
-              </Card>
-
-              <Card hover={false} className="bg-blue-700 dark:bg-blue-600 text-white border-0">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-blue-100 dark:text-blue-50 text-sm mb-1">Votes Cast</p>
-                    <p className="text-3xl font-bold">{userStats.rumorsVoted}</p>
-                  </div>
-                  <Users className="w-10 h-10 text-blue-200" />
-                </div>
-              </Card>
-
-              <Card hover={false} className="bg-blue-500 dark:bg-blue-400 text-white border-0">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-white text-sm mb-1">Correct Votes</p>
-                    <p className="text-3xl font-bold">{userStats.correctVotes}</p>
-                  </div>
-                  <CheckCircle className="w-10 h-10 text-white" />
-                </div>
-              </Card>
-
-              <Card hover={false} className="bg-blue-800 dark:bg-blue-700 text-white border-0">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-blue-100 dark:text-blue-50 text-sm mb-1">Accuracy</p>
-                    <p className="text-3xl font-bold">
-                      {userStats.rumorsVoted > 0
-                        ? Math.round((userStats.correctVotes / userStats.rumorsVoted) * 100)
-                        : 0}
-                      %
-                    </p>
-                  </div>
-                  <Target className="w-10 h-10 text-blue-200" />
-                </div>
-              </Card>
-            </div>
-          )}
 
           {/* Action Bar */}
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 space-y-4 md:space-y-0">
@@ -216,7 +161,7 @@ export default function DashboardPage() {
           {/* Rumors Feed */}
           {filteredRumors.length === 0 ? (
             <Card hover={false} className="text-center py-12">
-              <TrendingUp className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <AlertCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                 No rumors found
               </h3>

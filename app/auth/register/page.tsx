@@ -11,8 +11,7 @@ import Select from '@/components/ui/Select';
 import Card from '@/components/ui/Card';
 import Modal from '@/components/ui/Modal';
 import PasswordStrength from '@/components/ui/PasswordStrength';
-import { SecurityBadgeGroup } from '@/components/ui/SecurityBadge';
-import { UserPlus, Copy, CheckCircle, Shield, Info, AlertTriangle } from 'lucide-react';
+import { UserPlus, Copy, CheckCircle, AlertTriangle, Shield, Key } from 'lucide-react';
 import { copyToClipboard } from '@/lib/utils';
 import type { AreaOfVote } from '@/types';
 
@@ -80,14 +79,12 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
-      await register(universityId, password, area);
+      const response = await register(universityId, password, area);
       
-      // Get the secret key from localStorage (set by AuthContext)
-      const secretKey = localStorage.getItem('secret_key');
-      if (secretKey) {
-        setGeneratedSecretKey(secretKey);
-        setShowSecretKeyModal(true);
-      }
+      // Show the secret key modal
+      setGeneratedSecretKey(response.secretKey);
+      setShowSecretKeyModal(true);
+      setIsLoading(false);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Registration failed. Please try again.');
       setIsLoading(false);
@@ -104,7 +101,8 @@ export default function RegisterPage() {
 
   const handleCloseModal = () => {
     setShowSecretKeyModal(false);
-    router.push('/dashboard');
+    // Navigate to login to use the secret key
+    router.push('/auth/login');
   };
 
   return (
@@ -114,25 +112,20 @@ export default function RegisterPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="w-full max-w-md"
+          className="w-full max-w-lg"
         >
-          <Card hover={false} className="p-8">
+          <Card hover={false} className="p-10">
             {/* Header */}
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-blue-600 dark:bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                <UserPlus className="w-8 h-8 text-white" />
+            <div className="text-center mb-8">
+              <div className="w-20 h-20 bg-gradient-to-br from-green-600 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                <UserPlus className="w-10 h-10 text-white" />
               </div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              <h1 className="text-4xl font-black text-gray-900 dark:text-white mb-3 tracking-tight">
                 Create Account
               </h1>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-lg text-gray-600 dark:text-gray-400">
                 Join VeraNode and start discovering truth
               </p>
-            </div>
-
-            {/* Security Badges */}
-            <div className="mb-6">
-              <SecurityBadgeGroup />
             </div>
 
             {/* Error Message */}
@@ -140,9 +133,9 @@ export default function RegisterPage() {
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
-                className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg"
+                className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl"
               >
-                <div className="flex items-start gap-2">
+                <div className="flex items-start gap-3">
                   <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
                   <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
                 </div>
@@ -159,7 +152,7 @@ export default function RegisterPage() {
                 placeholder="e.g., 21i-1234"
                 required
                 disabled={isLoading}
-                helperText="Enter your official university ID"
+                helperText="For account recovery only"
               />
 
               <Select
@@ -200,73 +193,53 @@ export default function RegisterPage() {
                 error={confirmPassword && password !== confirmPassword ? 'Passwords do not match' : undefined}
               />
 
-              {/* Terms and Privacy */}
-              <div className="space-y-4">
-                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                  <div className="flex items-start gap-2">
-                    <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
-                    <div className="flex-1">
-                      <p className="text-sm text-blue-900 dark:text-blue-300 font-medium mb-1">
-                        How we protect you:
-                      </p>
-                      <ul className="text-xs text-blue-800 dark:text-blue-400 space-y-1">
-                        <li>• Zero-knowledge cryptography for anonymous voting</li>
-                        <li>• Passwords hashed with bcrypt (industry standard)</li>
-                        <li>• No personal data stored beyond university ID</li>
-                        <li>• Blockchain ensures vote integrity and transparency</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-
-                <label className="flex items-start gap-3 cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    checked={acceptedTerms}
-                    onChange={(e) => setAcceptedTerms(e.target.checked)}
-                    className="mt-1 w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    required
-                  />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
-                    I accept the{' '}
-                    <button
-                      type="button"
-                      className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
-                      onClick={() => window.open('/terms', '_blank')}
-                    >
-                      Terms of Service
-                    </button>
-                    {' '}and{' '}
-                    <button
-                      type="button"
-                      className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
-                      onClick={() => window.open('/privacy', '_blank')}
-                    >
-                      Privacy Policy
-                    </button>
-                  </span>
-                </label>
-              </div>
+              {/* Terms Checkbox */}
+              <label className="flex items-start gap-3 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={acceptedTerms}
+                  onChange={(e) => setAcceptedTerms(e.target.checked)}
+                  className="mt-1 w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  required
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">
+                  I accept the{' '}
+                  <button
+                    type="button"
+                    className="text-blue-600 dark:text-blue-400 hover:underline font-semibold"
+                    onClick={() => window.open('/terms', '_blank')}
+                  >
+                    Terms of Service
+                  </button>
+                  {' '}and{' '}
+                  <button
+                    type="button"
+                    className="text-blue-600 dark:text-blue-400 hover:underline font-semibold"
+                    onClick={() => window.open('/privacy', '_blank')}
+                  >
+                    Privacy Policy
+                  </button>
+                </span>
+              </label>
 
               <Button
                 type="submit"
                 variant="primary"
-                size="lg"
                 isLoading={isLoading}
-                className="w-full"
+                className="w-full h-14 text-lg font-bold rounded-xl shadow-lg hover:shadow-xl transition-all"
                 disabled={!acceptedTerms}
               >
-                <Shield className="w-4 h-4 mr-2" />
+                <Shield className="w-5 h-5 mr-2" />
                 Create Secure Account
               </Button>
             </form>
 
             {/* Footer */}
-            <div className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
+            <div className="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
               Already have an account?{' '}
               <Link
                 href="/auth/login"
-                className="font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                className="font-semibold text-blue-600 dark:text-blue-400 hover:underline"
               >
                 Login here
               </Link>
@@ -279,64 +252,78 @@ export default function RegisterPage() {
       <Modal
         isOpen={showSecretKeyModal}
         onClose={handleCloseModal}
-        title="🔑 Your Secret Key"
-        size="md"
+        title=""
+        size="lg"
         showCloseButton={false}
       >
         <div className="space-y-6">
-          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-            <p className="text-sm text-yellow-800 dark:text-yellow-300 font-medium mb-2">
-              ⚠️ CRITICAL: Save this key now!
-            </p>
-            <p className="text-sm text-yellow-800 dark:text-yellow-300">
-              This is your <strong>anonymous secret key</strong>. It's used to maintain your anonymity
-              and reputation. You cannot recover this key if you lose it.
-            </p>
-          </div>
-
-          <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4">
-            <p className="text-xs text-gray-600 dark:text-gray-400 mb-2 font-medium">
-              SECRET KEY:
-            </p>
-            <div className="flex items-center space-x-2">
-              <code className="flex-1 text-sm font-mono text-gray-900 dark:text-white break-all bg-white dark:bg-gray-900 p-3 rounded border border-gray-300 dark:border-gray-700">
-                {generatedSecretKey}
-              </code>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleCopySecretKey}
-                className="shrink-0"
-              >
-                {keyCopied ? (
-                  <>
-                    <CheckCircle className="w-4 h-4 mr-1" />
-                    Copied
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-4 h-4 mr-1" />
-                    Copy
-                  </>
-                )}
-              </Button>
+          {/* Icon and Title */}
+          <div className="text-center">
+            <div className="w-20 h-20 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl">
+              <Key className="w-10 h-10 text-white" />
             </div>
+            <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-2">
+              Save Your Secret Key!
+            </h2>
+            <p className="text-base text-gray-600 dark:text-gray-400">
+              This is your ONLY way to login. Keep it safe!
+            </p>
           </div>
 
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-            <p className="text-sm text-blue-800 dark:text-blue-300">
-              💡 <strong>Tip:</strong> Store this key in a password manager or write it down and keep it safe.
-              You'll need it to maintain your reputation if you ever need to recover your account.
+          {/* Warning Box */}
+          <div className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border-2 border-yellow-400 dark:border-yellow-600 rounded-xl p-6">
+            <p className="text-lg text-yellow-900 dark:text-yellow-300 font-bold mb-3 text-center">
+              ⚠️ CRITICAL: This will NOT be shown again!
+            </p>
+            <ul className="text-sm text-yellow-800 dark:text-yellow-400 space-y-2 list-disc list-inside">
+              <li>Your secret key maintains your anonymity</li>
+              <li>University ID/password are ONLY for recovery</li>
+              <li>You cannot login without this key</li>
+            </ul>
+          </div>
+
+          {/* Secret Key Display */}
+          <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-xl p-6 border-2 border-gray-300 dark:border-gray-700">
+            <p className="text-xs text-gray-600 dark:text-gray-400 mb-3 font-bold uppercase tracking-wider text-center">
+              Your Secret Key
+            </p>
+            <code className="block text-base font-mono font-bold text-gray-900 dark:text-white break-all bg-white dark:bg-gray-950 p-4 rounded-lg border-2 border-gray-300 dark:border-gray-600 text-center">
+              {generatedSecretKey}
+            </code>
+            <Button
+              variant={keyCopied ? "success" : "primary"}
+              size="lg"
+              onClick={handleCopySecretKey}
+              className="w-full mt-4 h-14 text-lg font-bold rounded-xl shadow-lg hover:shadow-xl transition-all"
+            >
+              {keyCopied ? (
+                <>
+                  <CheckCircle className="w-6 h-6 mr-2" />
+                  Copied to Clipboard!
+                </>
+              ) : (
+                <>
+                  <Copy className="w-6 h-6 mr-2" />
+                  Copy Secret Key
+                </>
+              )}
+            </Button>
+          </div>
+
+          {/* Info Box */}
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
+            <p className="text-sm text-blue-900 dark:text-blue-300 text-center">
+              💡 <strong>Tip:</strong> Store this in a password manager or save it in a secure place
             </p>
           </div>
 
           <Button
-            variant="primary"
+            variant="outline"
             size="lg"
             onClick={handleCloseModal}
-            className="w-full"
+            className="w-full h-12 text-base font-bold rounded-xl"
           >
-            I've Saved My Secret Key
+            I've Saved My Secret Key - Continue to Login
           </Button>
         </div>
       </Modal>
