@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@variant dark (&:where(.dark, .dark *));
+
 * {
   scroll-behavior: smooth;
 }
@@ -9,11 +11,10 @@
   --foreground: #171717;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Removed @media (prefers-color-scheme: dark) to allow manual theme toggle */
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
 }
 
 body {
@@ -44,19 +45,17 @@ body {
   background: #555;
 }
 
-/* Dark mode scrollbar */
-@media (prefers-color-scheme: dark) {
-  ::-webkit-scrollbar-track {
-    background: #1a1a1a;
-  }
+/* Dark mode scrollbar - controlled by .dark class, not OS preference */
+.dark ::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
 
-  ::-webkit-scrollbar-thumb {
-    background: #555;
-  }
+.dark ::-webkit-scrollbar-thumb {
+  background: #555;
+}
 
-  ::-webkit-scrollbar-thumb:hover {
-    background: #777;
-  }
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #777;
 }
 
 /* Animations */

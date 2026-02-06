@@ -41,11 +41,13 @@ export default function DashboardPage() {
           userAPI.getStats(),
         ]);
 
-        setRumors(rumorsData);
-        setFilteredRumors(rumorsData);
+        setRumors(Array.isArray(rumorsData) ? rumorsData : []);
+        setFilteredRumors(Array.isArray(rumorsData) ? rumorsData : []);
         setUserStats(statsData);
       } catch (error: any) {
         toast.error('Failed to load dashboard data');
+        setRumors([]);
+        setFilteredRumors([]);
       } finally {
         setIsLoading(false);
       }
@@ -58,6 +60,11 @@ export default function DashboardPage() {
 
   // Apply filters
   useEffect(() => {
+    if (!Array.isArray(rumors)) {
+      setFilteredRumors([]);
+      return;
+    }
+
     let filtered = [...rumors];
 
     // Status filter
@@ -86,10 +93,10 @@ export default function DashboardPage() {
   }
 
   const filters = [
-    { value: 'all', label: 'All', count: rumors.length },
-    { value: 'active', label: 'Active', count: rumors.filter((r) => !r.isLocked && !r.isFinal).length },
-    { value: 'locked', label: 'Locked', count: rumors.filter((r) => r.isLocked && !r.isFinal).length },
-    { value: 'final', label: 'Final', count: rumors.filter((r) => r.isFinal).length },
+    { value: 'all', label: 'All', count: Array.isArray(rumors) ? rumors.length : 0 },
+    { value: 'active', label: 'Active', count: Array.isArray(rumors) ? rumors.filter((r) => !r.isLocked && !r.isFinal).length : 0 },
+    { value: 'locked', label: 'Locked', count: Array.isArray(rumors) ? rumors.filter((r) => r.isLocked && !r.isFinal).length : 0 },
+    { value: 'final', label: 'Final', count: Array.isArray(rumors) ? rumors.filter((r) => r.isFinal).length : 0 },
   ];
 
   const areaOptions = ['all', 'General', 'SEECS', 'NBS', 'ASAB', 'SINES', 'SCME', 'S3H'];

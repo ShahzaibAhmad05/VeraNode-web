@@ -44,9 +44,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen">
-      {/* Scroll Progress Bar */}
-      <ScrollProgress />
-
       {/* Hero Section */}
       <section className="relative overflow-hidden py-20 px-4">
         <div className="absolute inset-0 bg-linear-to-br from-blue-50/50 via-white to-gray-50 dark:from-gray-900/50 dark:via-black dark:to-gray-950" />
@@ -96,6 +93,9 @@ export default function HomePage() {
             </p>
           </div>
 
+          {/* Scroll Progress Bar */}
+          <ScrollProgress />
+
           <div className="space-y-20">
             {/* Pair features in groups of 2 */}
             {[0, 2, 4].map((startIndex) => {
@@ -113,42 +113,36 @@ export default function HomePage() {
                     delay={0.1}
                     triggerOnce={false}
                   >
-                    <motion.div
-                      whileHover={{ scale: 1.02 }}
-                      className="bg-white dark:bg-gray-900 rounded-2xl p-8 shadow-xl border border-gray-200 dark:border-gray-800"
-                    >
-                      <div className="w-16 h-16 bg-blue-600 dark:bg-blue-500 rounded-xl flex items-center justify-center mb-6">
-                        <LeftIcon className="w-8 h-8 text-white" />
+                    <div className="p-8 bg-white/30 dark:bg-gray-900/20 backdrop-blur-sm rounded-lg">
+                      <div className="w-14 h-14 bg-blue-600/80 dark:bg-blue-500/70 rounded-lg flex items-center justify-center mb-5">
+                        <LeftIcon className="w-7 h-7 text-white" />
                       </div>
                       <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
                         {leftFeature.title}
                       </h3>
-                      <p className="text-gray-600 dark:text-gray-400 text-lg">
+                      <p className="text-gray-600 dark:text-gray-400 text-lg leading-relaxed">
                         {leftFeature.description}
                       </p>
-                    </motion.div>
+                    </div>
                   </ScrollReveal>
 
-                  {/* Right Card */}
+                  {/* Right Feature */}
                   <ScrollReveal
                     direction={isEvenRow ? "right" : "left"}
                     delay={0.2}
                     triggerOnce={false}
                   >
-                    <motion.div
-                      whileHover={{ scale: 1.02 }}
-                      className="bg-white dark:bg-gray-900 rounded-2xl p-8 shadow-xl border border-gray-200 dark:border-gray-800"
-                    >
-                      <div className="w-16 h-16 bg-blue-600 dark:bg-blue-500 rounded-xl flex items-center justify-center mb-6">
-                        <RightIcon className="w-8 h-8 text-white" />
+                    <div className="p-8 bg-white/30 dark:bg-gray-900/20 backdrop-blur-sm rounded-lg">
+                      <div className="w-14 h-14 bg-blue-600/80 dark:bg-blue-500/70 rounded-lg flex items-center justify-center mb-5">
+                        <RightIcon className="w-7 h-7 text-white" />
                       </div>
                       <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
                         {rightFeature.title}
                       </h3>
-                      <p className="text-gray-600 dark:text-gray-400 text-lg">
+                      <p className="text-gray-600 dark:text-gray-400 text-lg leading-relaxed">
                         {rightFeature.description}
                       </p>
-                    </motion.div>
+                    </div>
                   </ScrollReveal>
                 </div>
               );

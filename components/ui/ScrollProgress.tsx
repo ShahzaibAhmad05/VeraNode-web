@@ -9,32 +9,34 @@ export function ScrollProgress() {
     const updateScrollProgress = () => {
       const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
       const scrolled = window.scrollY;
-      const progress = (scrolled / scrollHeight) * 100;
-      setScrollProgress(progress);
+      const progress = scrollHeight > 0 ? (scrolled / scrollHeight) * 100 : 0;
+      setScrollProgress(Math.min(100, Math.max(0, progress)));
     };
 
-    window.addEventListener('scroll', updateScrollProgress);
+    window.addEventListener('scroll', updateScrollProgress, { passive: true });
     updateScrollProgress();
 
     return () => window.removeEventListener('scroll', updateScrollProgress);
   }, []);
 
   return (
-    <div className="fixed left-1/2 top-20 -translate-x-1/2 z-50 hidden lg:flex flex-col items-center">
-      {/* Progress Bar Container */}
-      <div className="relative h-64 w-1 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
-        {/* Progress Fill */}
-        <div
-          className="absolute bottom-0 w-full bg-blue-600 dark:bg-blue-500 transition-all duration-300 ease-out"
-          style={{ height: `${scrollProgress}%` }}
-        />
-      </div>
-      
-      {/* Progress Percentage */}
-      <div className="mt-2 px-2 py-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-md shadow-lg">
-        <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
-          {Math.round(scrollProgress)}%
-        </span>
+    <div className="flex justify-center mb-16">
+      <div className="w-full max-w-md">
+        {/* Progress Bar Container */}
+        <div className="relative h-2 w-full bg-gray-200/60 dark:bg-gray-800/60 rounded-full overflow-hidden backdrop-blur-sm">
+          {/* Progress Fill */}
+          <div
+            className="absolute left-0 top-0 h-full bg-linear-to-r from-blue-600 to-blue-400 dark:from-blue-500 dark:to-blue-300 transition-all duration-300 ease-out rounded-full"
+            style={{ width: `${scrollProgress}%` }}
+          />
+        </div>
+        
+        {/* Progress Percentage */}
+        <div className="mt-2 text-center">
+          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+            {Math.round(scrollProgress)}% scrolled
+          </span>
+        </div>
       </div>
     </div>
   );
