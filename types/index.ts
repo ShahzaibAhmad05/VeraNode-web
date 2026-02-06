@@ -1,5 +1,7 @@
 export type AreaOfVote = 'SEECS' | 'NBS' | 'ASAB' | 'SINES' | 'SCME' | 'S3H' | 'General';
 
+export type Department = 'SEECS' | 'NBS' | 'ASAB' | 'SINES' | 'SCME' | 'S3H';
+
 export interface User {
   id: string;
   secretKey?: string;

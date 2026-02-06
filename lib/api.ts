@@ -26,8 +26,8 @@ export const authAPI = {
     return response.data;
   },
 
-  register: async (area: string): Promise<{ secretKey: string; profile: User; message: string }> => {
-    const response = await api.post('/auth/register', { area });
+  register: async (email: string, password: string, department: string): Promise<{ secretKey: string; profile: User; message: string }> => {
+    const response = await api.post('/auth/register', { email, password, department });
     return response.data;
   },
 

@@ -1,38 +1,39 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Card from '@/components/ui/Card';
-import Modal from '@/components/ui/Modal';
-import { UserPlus, Copy, CheckCircle, AlertTriangle, Shield, Key, Lightbulb } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Copy, CheckCircle, AlertTriangle, Key, Loader2, Shield } from 'lucide-react';
 import { copyToClipboard } from '@/lib/utils';
-import type { AreaOfVote } from '@/types';
+import type { Department } from '@/types';
+
+type Step = 'email' | 'password' | 'verifying' | 'success';
 
 export default function RegisterPage() {
   const router = useRouter();
   const { register, isAuthenticated } = useAuth();
-  const [area, setArea] = useState<AreaOfVote>('General');
-  const [isLoading, setIsLoading] = useState(false);
+  const [step, setStep] = useState<Step>('email');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [department, setDepartment] = useState<Department>('SEECS');
   const [error, setError] = useState('');
-  const [showSecretKeyModal, setShowSecretKeyModal] = useState(false);
   const [generatedSecretKey, setGeneratedSecretKey] = useState('');
   const [keyCopied, setKeyCopied] = useState(false);
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   // Redirect if already authenticated
-  React.useEffect(() => {
+  useEffect(() => {
     if (isAuthenticated) {
       router.push('/dashboard');
     }
   }, [isAuthenticated, router]);
 
-  const areaOptions = [
-    { value: 'General', label: 'General' },
+  const departmentOptions = [
     { value: 'SEECS', label: 'SEECS - School of Electrical Engineering & Computer Science' },
     { value: 'NBS', label: 'NBS - NUST Business School' },
     { value: 'ASAB', label: 'ASAB - Atta-ur-Rahman School of Applied Biosciences' },
@@ -41,29 +42,52 @@ export default function RegisterPage() {
     { value: 'S3H', label: 'S3H - School of Social Sciences and Humanities' },
   ];
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleEmailNext = () => {
     setError('');
-
-    // Validation
-    if (!acceptedTerms) {
-      setError('You must accept the Terms of Service and Privacy Policy to continue');
+    
+    if (!email.trim()) {
+      setError('Email is required');
       return;
     }
 
-    setIsLoading(true);
-
-    try {
-      const response = await register(area);
-      
-      // Show the secret key modal
-      setGeneratedSecretKey(response.secretKey);
-      setShowSecretKeyModal(true);
-      setIsLoading(false);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Registration failed. Please try again.');
-      setIsLoading(false);
+    if (!email.includes('@') || !email.includes('.')) {
+      setError('Invalid email format');
+      return;
     }
+
+    if (!email.toLowerCase().endsWith('.edu.pk')) {
+      setError('Email must end with .edu.pk');
+      return;
+    }
+
+    setStep('password');
+  };
+
+  const handlePasswordNext = async () => {
+    setError('');
+
+    if (!password || password.length < 8) {
+      setError('Password must be at least 8 characters long');
+      return;
+    }
+
+    setStep('verifying');
+
+    // Simulate verification delay for smooth UX
+    setTimeout(async () => {
+      try {
+        const response = await register(email, password, department);
+        setGeneratedSecretKey(response.secretKey);
+        
+        // Short delay before showing success
+        setTimeout(() => {
+          setStep('success');
+        }, 800);
+      } catch (err: any) {
+        setError(err.response?.data?.message || 'Registration failed. Please try again.');
+        setStep('password');
+      }
+    }, 1500);
   };
 
   const handleCopySecretKey = async () => {
@@ -74,199 +98,240 @@ export default function RegisterPage() {
     }
   };
 
-  const handleCloseModal = () => {
-    setShowSecretKeyModal(false);
-    // Navigate to login to use the secret key
+  const handleGoToLogin = () => {
     router.push('/auth/login');
   };
 
-  return (
-    <>
-      <div className="fixed inset-0 top-16 flex items-center justify-center px-4 overflow-hidden">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="w-full max-w-lg"
-        >
-          <Card hover={false} className="p-10">
-            {/* Header */}
-            <div className="text-center mb-8">
-              <div className="w-20 h-20 bg-linear-to-br from-green-600 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                <UserPlus className="w-10 h-10 text-white" />
-              </div>
-              <h1 className="text-4xl font-black text-gray-900 dark:text-white mb-3 tracking-tight">
-                Create Account
-              </h1>
-              <p className="text-lg text-gray-600 dark:text-gray-400">
-                Join VeraNode and start discovering truth
-              </p>
-            </div>
+  const handleBack = () => {
+    setError('');
+    if (step === 'password') setStep('email');
+  };
 
-            {/* Error Message */}
+  return (
+    <div className="fixed inset-0 top-16 flex items-center justify-center px-4 overflow-hidden">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-md"
+      >
+        <Card hover={false} className="p-8">
+          {/* Logo & Branding */}
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+              VeraNode
+            </h1>
+          </div>
+
+          {/* Error Message */}
+          <AnimatePresence mode="wait">
             {error && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
-                className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl"
+                exit={{ opacity: 0, height: 0 }}
+                className="mb-6 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg"
               >
-                <div className="flex items-start gap-3">
-                  <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
                   <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
                 </div>
               </motion.div>
             )}
+          </AnimatePresence>
 
-            {/* Register Form */}
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <Select
-                label="School / Area"
-                value={area}
-                onChange={(e) => setArea(e.target.value as AreaOfVote)}
-                options={areaOptions}
-                disabled={isLoading}
-              />
-
-              {/* Terms Checkbox */}
-              <label className="flex items-start gap-3 cursor-pointer group">
-                <input
-                  type="checkbox"
-                  checked={acceptedTerms}
-                  onChange={(e) => setAcceptedTerms(e.target.checked)}
-                  className="mt-1 w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  required
-                />
-                <span className="text-sm text-gray-700 dark:text-gray-300">
-                  I accept the{' '}
-                  <button
-                    type="button"
-                    className="text-blue-600 dark:text-blue-400 hover:underline font-semibold"
-                    onClick={() => window.open('/terms', '_blank')}
-                  >
-                    Terms of Service
-                  </button>
-                  {' '}and{' '}
-                  <button
-                    type="button"
-                    className="text-blue-600 dark:text-blue-400 hover:underline font-semibold"
-                    onClick={() => window.open('/privacy', '_blank')}
-                  >
-                    Privacy Policy
-                  </button>
-                </span>
-              </label>
-
-              <Button
-                type="submit"
-                variant="primary"
-                isLoading={isLoading}
-                className="w-full h-14 text-lg font-bold rounded-xl shadow-lg hover:shadow-xl transition-all"
-                disabled={!acceptedTerms}
+          {/* Step Content */}
+          <AnimatePresence mode="wait">
+            {step === 'email' && (
+              <motion.div
+                key="email"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
               >
-                <Shield className="w-5 h-5 mr-2" />
-                Create Secure Account
-              </Button>
-            </form>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                  Create account
+                </h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                  Let's get started with your university email
+                </p>
 
-            {/* Footer */}
-            <div className="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
-              Already have an account?{' '}
-              <Link
-                href="/auth/login"
-                className="font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+                <div className="space-y-4">
+                  <Input
+                    label="University email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="student@nust.edu.pk"
+                    onKeyDown={(e) => e.key === 'Enter' && handleEmailNext()}
+                    autoFocus
+                  />
+
+                  <Select
+                    label="Department"
+                    value={department}
+                    onChange={(e) => setDepartment(e.target.value as Department)}
+                    options={departmentOptions}
+                  />
+
+                  <Button
+                    onClick={handleEmailNext}
+                    variant="primary"
+                    className="w-full mt-6"
+                  >
+                    Next
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </div>
+
+                <div className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
+                  Already have an account?{' '}
+                  <Link href="/auth/login" className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
+                    Sign in
+                  </Link>
+                </div>
+              </motion.div>
+            )}
+
+            {step === 'password' && (
+              <motion.div
+                key="password"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
               >
-                Login here
-              </Link>
-            </div>
-          </Card>
-        </motion.div>
-      </div>
+                <button
+                  onClick={handleBack}
+                  className="flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-6 transition-colors"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-1" />
+                  Back
+                </button>
 
-      {/* Secret Key Modal */}
-      <Modal
-        isOpen={showSecretKeyModal}
-        onClose={handleCloseModal}
-        title=""
-        size="lg"
-        showCloseButton={false}
-      >
-        <div className="space-y-6">
-          {/* Icon and Title */}
-          <div className="text-center">
-            <div className="w-20 h-20 bg-linear-to-br from-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl">
-              <Key className="w-10 h-10 text-white" />
-            </div>
-            <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-2">
-              Save Your Secret Key!
-            </h2>
-            <p className="text-base text-gray-600 dark:text-gray-400">
-              This is your ONLY way to login. Keep it safe!
-            </p>
-          </div>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
+                  Enter password
+                </h2>
+                <p className="text-sm text-gray-500 dark:text-gray-500 mb-1">
+                  Type your password for this email account:
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  {email}
+                </p>
 
-          {/* Warning Box */}
-          <div className="bg-linear-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border-2 border-yellow-400 dark:border-yellow-600 rounded-xl p-6">
-            <div className="flex items-start justify-center space-x-2 mb-3">
-              <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 shrink-0 mt-0.5" />
-              <p className="text-lg text-yellow-900 dark:text-yellow-300 font-bold text-center">
-                SAVE YOUR SECRET KEY - it cannot be recovered or regenerated!
-              </p>
-            </div>
-            <ul className="text-sm text-yellow-800 dark:text-yellow-400 space-y-2 list-disc list-inside">
-              <li>Your secret key maintains your anonymity</li>
-              <li>This is your ONLY way to login</li>
-              <li>Lost keys cannot be recovered</li>
-            </ul>
-          </div>
+                <div className="space-y-4">
+                  <Input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter here"
+                    showPasswordToggle
+                    onKeyDown={(e) => e.key === 'Enter' && handlePasswordNext()}
+                    autoFocus
+                    helperText="Minimum 8 characters"
+                  />
 
-          {/* Secret Key Display */}
-          <div className="bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-xl p-6 border-2 border-gray-300 dark:border-gray-700">
-            <p className="text-xs text-gray-600 dark:text-gray-400 mb-3 font-bold uppercase tracking-wider text-center">
-              Your Secret Key
-            </p>
-            <code className="block text-base font-mono font-bold text-gray-900 dark:text-white break-all bg-white dark:bg-gray-950 p-4 rounded-lg border-2 border-gray-300 dark:border-gray-600 text-center">
-              {generatedSecretKey}
-            </code>
-            <Button
-              variant={keyCopied ? "success" : "primary"}
-              size="lg"
-              onClick={handleCopySecretKey}
-              className="w-full mt-4 h-14 text-lg font-bold rounded-xl shadow-lg hover:shadow-xl transition-all"
-            >
-              {keyCopied ? (
-                <>
-                  <CheckCircle className="w-6 h-6 mr-2" />
-                  Copied to Clipboard!
-                </>
-              ) : (
-                <>
-                  <Copy className="w-6 h-6 mr-2" />
-                  Copy Secret Key
-                </>
-              )}
-            </Button>
-          </div>
+                  <Button
+                    onClick={handlePasswordNext}
+                    variant="primary"
+                    className="w-full mt-6"
+                  >
+                    Create account
+                  </Button>
+                </div>
+              </motion.div>
+            )}
 
-          {/* Info Box */}
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
-            <div className="flex items-start justify-center space-x-2">
-              <Lightbulb className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
-              <p className="text-sm text-blue-900 dark:text-blue-300 text-center">
-                <strong>Tip:</strong> Store this in a password manager or save it in a secure place
-              </p>
-            </div>
-          </div>
+            {step === 'verifying' && (
+              <motion.div
+                key="verifying"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.3 }}
+                className="text-center py-12"
+              >
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                  className="w-16 h-16 mx-auto mb-6"
+                >
+                  <Loader2 className="w-16 h-16 text-blue-600" />
+                </motion.div>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                  Creating your account
+                </h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Verifying your school email...
+                </p>
+              </motion.div>
+            )}
 
-          <Button
-            variant="outline"
-            size="lg"
-            onClick={handleCloseModal}
-            className="w-full h-12 text-base font-bold rounded-xl"
-          >
-            I've Saved My Secret Key - Continue to Login
-          </Button>
-        </div>
-      </Modal>
-    </>
+            {step === 'success' && (
+              <motion.div
+                key="success"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="text-center mb-6">
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                    className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4"
+                  >
+                    <CheckCircle className="w-10 h-10 text-green-600 dark:text-green-400" />
+                  </motion.div>
+                  <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                    Account created successfully
+                  </h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 px-4">
+                    This secret key cannot be recovered later, save it right now!
+                  </p>
+                </div>
+
+                <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Key className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                      <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold uppercase tracking-wider">
+                        Your Secret Key
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleCopySecretKey}
+                      className="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                      title={keyCopied ? "Copied!" : "Copy to clipboard"}
+                    >
+                      {keyCopied ? (
+                        <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
+                      ) : (
+                        <Copy className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                      )}
+                    </button>
+                  </div>
+                  <code className="block text-sm font-mono font-bold text-gray-900 dark:text-white break-all bg-white dark:bg-gray-900 p-3 rounded border border-gray-300 dark:border-gray-600">
+                    {generatedSecretKey}
+                  </code>
+                </div>
+
+                <div className="space-y-3">
+                  <Button
+                    onClick={handleGoToLogin}
+                    variant="primary"
+                    className="w-full"
+                  >
+                    Continue to login
+                  </Button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </Card>
+      </motion.div>
+    </div>
   );
 }

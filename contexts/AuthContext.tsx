@@ -12,7 +12,7 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (secretKey: string) => Promise<void>;
-  register: (area: string) => Promise<{ secretKey: string }>;
+  register: (email: string, password: string, department: string) => Promise<{ secretKey: string }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -88,9 +88,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const register = async (area: string) => {
+  const register = async (email: string, password: string, department: string) => {
     try {
-      const response = await authAPI.register(area);
+      const response = await authAPI.register(email, password, department);
       
       // Don't auto-login after registration - user needs to save secret key first
       // Just return the secret key to display in the UI
