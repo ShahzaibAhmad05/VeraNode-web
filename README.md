@@ -1,6 +1,6 @@
-# Anonymous Campus Rumor System
+# VeraNode
 
-An anonymous system for posting rumors and having them verified through votes.
+An AI-powered Anonymous Campus Rumor System for posting rumors and having them verified through votes.
 
 ## Overview
 
