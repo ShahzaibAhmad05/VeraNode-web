@@ -50,9 +50,14 @@ const VotingInterface: React.FC<VotingInterfaceProps> = ({
     setShowConfirmModal(false);
 
     try {
-      await voteAPI.submitVote(rumor.id, voteType);
-      toast.success('Vote submitted successfully!');
-      onVoteSuccess();
+      const response = await voteAPI.submitVote(rumor.id, voteType);
+      
+      if (response.success) {
+        toast.success(`Vote submitted successfully! Weight: ${response.weight.toFixed(1)}`);
+        onVoteSuccess();
+      } else {
+        toast.error('Failed to submit vote');
+      }
     } catch (error: any) {
       const message = error.response?.data?.message || 'Failed to submit vote';
       toast.error(message);

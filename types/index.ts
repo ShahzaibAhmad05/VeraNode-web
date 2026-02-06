@@ -18,21 +18,18 @@ export interface Rumor {
   isLocked: boolean;
   isFinal: boolean;
   finalDecision?: 'FACT' | 'LIE' | null;
-  nullifier: string;
-  previousHash: string;
   currentHash: string;
-  votesCount: {
-    fact: number;
-    lie: number;
+  previousHash: string;
+  stats: {
+    totalVotes: number;
+    factVotes: number;
+    lieVotes: number;
+    factWeight: number;
+    lieWeight: number;
+    underAreaVotes: number;
+    notUnderAreaVotes: number;
+    progress: number;
   };
-  votesWeight: {
-    fact: number;
-    lie: number;
-  };
-  totalVotes: number;
-  underAreaVotes: number;
-  notUnderAreaVotes?: number;
-  requiredWithinAreaPercentage: number;
 }
 
 export interface Vote {
@@ -44,6 +41,20 @@ export interface Vote {
   timestamp: string;
 }
 
+export interface VoteStatus {
+  hasVoted: boolean;
+  voteType: 'FACT' | 'LIE' | null;
+  weight?: number;
+  timestamp?: string;
+}
+
+export interface VoteResponse {
+  success: boolean;
+  nullifier: string;
+  weight: number;
+  isWithinArea: boolean;
+}
+
 export interface VoteStats {
   totalVotes: number;
   factVotes: number;
@@ -53,6 +64,14 @@ export interface VoteStats {
   underAreaVotes: number;
   notUnderAreaVotes: number;
   progress: number;
+}
+
+export interface RumorsResponse {
+  rumors: Rumor[];
+}
+
+export interface RumorResponse {
+  rumor: Rumor;
 }
 
 export interface AIValidation {

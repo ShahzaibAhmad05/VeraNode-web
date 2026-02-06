@@ -9,7 +9,7 @@ import Badge from '@/components/ui/Badge';
 import VotingInterface from '@/components/features/VotingInterface';
 import { Clock, Users, TrendingUp, Lock, CheckCircle, XCircle, Shield } from 'lucide-react';
 import { rumorAPI, voteAPI } from '@/lib/api';
-import type { Rumor, VoteStats } from '@/types';
+import type { Rumor } from '@/types';
 import { formatRelativeTime, formatTimeRemaining, calculateTimeRemaining, calculatePercentage } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
@@ -20,7 +20,6 @@ export default function RumorDetailPage() {
   const rumorId = params.id as string;
 
   const [rumor, setRumor] = useState<Rumor | null>(null);
-  const [stats, setStats] = useState<VoteStats | null>(null);
   const [hasVoted, setHasVoted] = useState(false);
   const [existingVote, setExistingVote] = useState<'FACT' | 'LIE' | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
@@ -36,16 +35,14 @@ export default function RumorDetailPage() {
   // Load rumor data
   const loadRumorData = async () => {
     try {
-      const [rumorData, statsData, voteStatus] = await Promise.all([
+      const [rumorData, voteStatus] = await Promise.all([
         rumorAPI.getById(rumorId),
-        rumorAPI.getStats(rumorId),
         voteAPI.checkVoted(rumorId),
       ]);
 
       setRumor(rumorData);
-      setStats(statsData);
       setHasVoted(voteStatus.hasVoted);
-      setExistingVote(voteStatus.voteType);
+      setExistingVote(voteStatus.voteType || undefined);
     } catch (error: any) {
       toast.error('Failed to load rumor');
       router.push('/dashboard');
@@ -86,10 +83,11 @@ export default function RumorDetailPage() {
     );
   }
 
-  if (!rumor || !stats) {
+  if (!rumor) {
     return null;
   }
 
+  const stats = rumor.stats;
   const factPercentage = calculatePercentage(stats.factWeight, stats.factWeight + stats.lieWeight);
   const underAreaProgress = calculatePercentage(stats.underAreaVotes, stats.totalVotes);
   const notUnderAreaProgress = stats.notUnderAreaVotes ? calculatePercentage(stats.notUnderAreaVotes, stats.totalVotes) : 0;

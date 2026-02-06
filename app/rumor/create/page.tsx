@@ -19,6 +19,7 @@ export default function CreateRumorPage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [content, setContent] = useState('');
   const [areaOfVote, setAreaOfVote] = useState<AreaOfVote>('General');
+  const [votingDuration, setVotingDuration] = useState<number>(48); // hours
   const [isValidating, setIsValidating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showValidationModal, setShowValidationModal] = useState(false);
@@ -41,6 +42,19 @@ export default function CreateRumorPage() {
     { value: 'S3H', label: 'S3H' },
   ];
 
+  const durationOptions = [
+    { value: '12', label: '12 hours' },
+    { value: '24', label: '24 hours' },
+    { value: '48', label: '48 hours (Recommended)' },
+    { value: '72', label: '72 hours' },
+  ];
+
+  const calculateVotingEndsAt = (hours: number): string => {
+    const now = new Date();
+    const endsAt = new Date(now.getTime() + hours * 60 * 60 * 1000);
+    return endsAt.toISOString();
+  };
+
   const handlePreValidate = async () => {
     if (!content.trim()) {
       toast.error('Please enter rumor content');
@@ -50,7 +64,8 @@ export default function CreateRumorPage() {
     setIsValidating(true);
 
     try {
-      const validation = await rumorAPI.validateWithAI(content);
+      const votingEndsAt = calculateVotingEndsAt(votingDuration);
+      const validation = await rumorAPI.validateWithAI(content, votingEndsAt);
       setValidationResult(validation);
       setShowValidationModal(true);
     } catch (error: any) {
@@ -71,20 +86,14 @@ export default function CreateRumorPage() {
     setIsSubmitting(true);
 
     try {
-      const response = await rumorAPI.create(content, areaOfVote);
+      const votingEndsAt = calculateVotingEndsAt(votingDuration);
+      const rumor = await rumorAPI.create(content, areaOfVote, votingEndsAt);
       
-      if (!response.validation.isValid) {
-        toast.error(response.validation.reason || 'Rumor was rejected by AI');
-        setValidationResult(response.validation);
-        setShowValidationModal(true);
-        setIsSubmitting(false);
-        return;
-      }
-
       toast.success('Rumor posted successfully!');
-      router.push(`/rumor/${response.rumor.id}`);
+      router.push(`/rumor/${rumor.id}`);
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to post rumor');
+      const message = error.response?.data?.message || 'Failed to post rumor';
+      toast.error(message);
       setIsSubmitting(false);
     }
   };
@@ -163,6 +172,19 @@ export default function CreateRumorPage() {
                   options={areaOptions}
                   disabled={isSubmitting || isValidating}
                 />
+
+                <div>
+                  <Select
+                    label="Voting Duration"
+                    value={votingDuration.toString()}
+                    onChange={(e) => setVotingDuration(Number(e.target.value))}
+                    options={durationOptions}
+                    disabled={isSubmitting || isValidating}
+                  />
+                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                    How long should the community have to vote on this rumor?
+                  </p>
+                </div>
 
                 {user?.area !== areaOfVote && areaOfVote !== 'General' && (
                   <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3 flex items-center space-x-2">

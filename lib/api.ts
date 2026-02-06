@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { User, Rumor, Vote, AIValidation, VoteStats, UserStats } from '@/types';
+import type { User, Rumor, Vote, AIValidation, VoteStats, UserStats, RumorsResponse, RumorResponse, VoteStatus, VoteResponse } from '@/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3008/api';
 
@@ -54,41 +54,36 @@ export const authAPI = {
 
 // Rumor APIs
 export const rumorAPI = {
-  getAll: async (filters?: { area?: string; status?: string }): Promise<Rumor[]> => {
-    const response = await api.get('/rumors', { params: filters });
-    return response.data;
+  getAll: async (filters?: { status?: string }): Promise<Rumor[]> => {
+    const response = await api.get<RumorsResponse>('/rumors', { params: filters });
+    return response.data.rumors;
   },
 
   getById: async (id: string): Promise<Rumor> => {
-    const response = await api.get(`/rumors/${id}`);
-    return response.data;
+    const response = await api.get<RumorResponse>(`/rumors/${id}`);
+    return response.data.rumor;
   },
 
-  create: async (content: string, areaOfVote: string): Promise<{ rumor: Rumor; validation: AIValidation }> => {
-    const response = await api.post('/rumors', { content, areaOfVote });
-    return response.data;
+  create: async (content: string, areaOfVote: string, votingEndsAt: string): Promise<Rumor> => {
+    const response = await api.post<RumorResponse>('/rumors', { content, areaOfVote, votingEndsAt });
+    return response.data.rumor;
   },
 
-  validateWithAI: async (content: string): Promise<AIValidation> => {
-    const response = await api.post('/rumors/validate', { content });
-    return response.data;
-  },
-
-  getStats: async (rumorId: string): Promise<VoteStats> => {
-    const response = await api.get(`/rumors/${rumorId}/stats`);
+  validateWithAI: async (content: string, votingEndsAt: string): Promise<AIValidation> => {
+    const response = await api.post('/rumors/validate', { content, votingEndsAt });
     return response.data;
   },
 };
 
 // Vote APIs
 export const voteAPI = {
-  submitVote: async (rumorId: string, voteType: 'FACT' | 'LIE'): Promise<{ success: boolean; nullifier: string }> => {
-    const response = await api.post(`/rumors/${rumorId}/vote`, { voteType });
+  submitVote: async (rumorId: string, voteType: 'FACT' | 'LIE'): Promise<VoteResponse> => {
+    const response = await api.post<VoteResponse>(`/rumors/${rumorId}/vote`, { voteType });
     return response.data;
   },
 
-  checkVoted: async (rumorId: string): Promise<{ hasVoted: boolean; voteType?: 'FACT' | 'LIE' }> => {
-    const response = await api.get(`/rumors/${rumorId}/vote-status`);
+  checkVoted: async (rumorId: string): Promise<VoteStatus> => {
+    const response = await api.get<VoteStatus>(`/rumors/${rumorId}/vote-status`);
     return response.data;
   },
 

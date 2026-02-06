@@ -118,7 +118,7 @@ export default function DashboardPage() {
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 space-y-4 md:space-y-0">
             <div className="flex items-center space-x-2">
               <Filter className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Status:</span>
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Filter:</span>
               <div className="flex space-x-2">
                 {filters.map((filter) => (
                   <button

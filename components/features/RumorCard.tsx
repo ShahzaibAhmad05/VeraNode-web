@@ -63,9 +63,9 @@ const RumorCard: React.FC<RumorCardProps> = ({ rumor }) => {
     );
   };
 
-  const totalVotesWeight = rumor.votesWeight.fact + rumor.votesWeight.lie;
+  const totalVotesWeight = rumor.stats.factWeight + rumor.stats.lieWeight;
   const factPercentage = totalVotesWeight > 0 
-    ? Math.round((rumor.votesWeight.fact / totalVotesWeight) * 100) 
+    ? Math.round((rumor.stats.factWeight / totalVotesWeight) * 100) 
     : 50;
 
   return (
@@ -111,7 +111,7 @@ const RumorCard: React.FC<RumorCardProps> = ({ rumor }) => {
           <div className="flex items-center space-x-4 text-gray-600 dark:text-gray-400">
             <div className="flex items-center space-x-1">
               <Users className="w-4 h-4" />
-              <span>{rumor.totalVotes} votes</span>
+              <span>{rumor.stats.totalVotes} votes</span>
             </div>
             {!rumor.isLocked && (
               <div className="flex items-center space-x-1">
