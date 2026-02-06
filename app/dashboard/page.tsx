@@ -9,6 +9,7 @@ import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import RumorCard from '@/components/features/RumorCard';
 import { ScrollReveal } from '@/components/ui/ScrollReveal';
+import CustomDropdown from '@/components/ui/CustomDropdown';
 import { Filter, PlusCircle, AlertCircle } from 'lucide-react';
 import { rumorAPI, voteAPI } from '@/lib/api';
 import type { Rumor } from '@/types';
@@ -110,7 +111,16 @@ export default function DashboardPage() {
     { value: 'final', label: 'Final', count: Array.isArray(rumors) ? rumors.filter((r) => r.isFinal).length : 0 },
   ];
 
-  const areaOptions = ['all', 'General', 'SEECS', 'NBS', 'ASAB', 'SINES', 'SCME', 'S3H'];
+  const areaOptions = [
+    { value: 'all', label: 'All Areas' },
+    { value: 'General', label: 'General' },
+    { value: 'SEECS', label: 'SEECS' },
+    { value: 'NBS', label: 'NBS' },
+    { value: 'ASAB', label: 'ASAB' },
+    { value: 'SINES', label: 'SINES' },
+    { value: 'SCME', label: 'SCME' },
+    { value: 'S3H', label: 'S3H' },
+  ];
 
   return (
     <div className="min-h-[calc(100vh-4rem)] px-8 py-8">
@@ -122,11 +132,11 @@ export default function DashboardPage() {
         >
 
           {/* Action Bar */}
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-14 mt-4 space-y-4 md:space-y-0">
-            <div className="flex items-center space-x-2">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-12 mt-3 space-y-4 md:space-y-0">
+            <div className="flex items-center space-x-1 flex-wrap gap-2">
               <Filter className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              <span className="text-lg font-semibold pr-2 text-gray-700 dark:text-gray-300 ">Filter:</span>
-              <div className="flex space-x-4">
+              <span className="text-lg font-semibold pr-2 text-gray-700 dark:text-gray-300">Filter:</span>
+              <div className="flex space-x-3">
                 {filters.map((filter) => (
                   <button
                     key={filter.value}
@@ -140,22 +150,16 @@ export default function DashboardPage() {
                     {filter.label} ({filter.count})
                   </button>
                 ))}
+                <CustomDropdown
+                  value={areaFilter}
+                  onChange={setAreaFilter}
+                  options={areaOptions}
+                  placeholder="All Areas"
+                />
               </div>
             </div>
 
             <div className="flex items-center space-x-4">
-              <select
-                value={areaFilter}
-                onChange={(e) => setAreaFilter(e.target.value)}
-                className="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
-              >
-                {areaOptions.map((area) => (
-                  <option key={area} value={area}>
-                    {area === 'all' ? 'All Areas' : area}
-                  </option>
-                ))}
-              </select>
-
               <Link href="/rumor/create">
                 <Button variant="primary" size="md" className="flex items-center px-4 py-3 rounded-2xl">
                   <PlusCircle className="w-6 h-6 mr-2" />
