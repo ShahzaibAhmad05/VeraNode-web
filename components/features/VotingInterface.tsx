@@ -51,7 +51,12 @@ const VotingInterface: React.FC<VotingInterfaceProps> = ({
       const response = await voteAPI.submitVote(rumor.id, voteType);
       
       if (response.success) {
-        toast.success(`Vote submitted successfully!`);
+        toast.success('Vote submitted successfully!', {
+          iconTheme: {
+            primary: '#10b981',
+            secondary: '#fff',
+          },
+        });
         onVoteSuccess();
       } else {
         toast.error('Failed to submit vote');

@@ -70,7 +70,12 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
       
       setAdmin(response.admin);
       
-      toast.success('Admin login successful!');
+      toast.success('Admin login successful!', {
+        iconTheme: {
+          primary: '#10b981',
+          secondary: '#fff',
+        },
+      });
       router.push('/admin/dashboard');
     } catch (error: any) {
       const message = error.response?.data?.message || 'Admin login failed';
@@ -83,7 +88,12 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     sessionStorage.removeItem('admin_token');
     sessionStorage.removeItem('admin_data');
     setAdmin(null);
-    toast.success('Admin logged out');
+    toast.success('Admin logged out', {
+      iconTheme: {
+        primary: '#10b981',
+        secondary: '#fff',
+      },
+    });
     router.push('/admin/login');
   };
 

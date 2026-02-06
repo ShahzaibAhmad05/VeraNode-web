@@ -74,7 +74,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(response.profile);
       setSecretKey(secretKey);
       
-      toast.success('Login successful!');
+      toast.success('Login successful!', {
+        iconTheme: {
+          primary: '#10b981',
+          secondary: '#fff',
+        },
+      });
       router.push('/dashboard');
     } catch (error: any) {
       const message = error.response?.data?.message || 'Login failed';
@@ -112,7 +117,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
       setSecretKey(null);
       
-      toast.success('Logged out successfully');
+      toast.success('Logged out successfully', {
+        iconTheme: {
+          primary: '#10b981',
+          secondary: '#fff',
+        },
+      });
       router.push('/auth/login');
     }
   };

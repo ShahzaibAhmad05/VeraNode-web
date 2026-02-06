@@ -58,7 +58,12 @@ export default function ProfilePage() {
       const success = await copyToClipboard(secretKey);
       if (success) {
         setKeyCopied(true);
-        toast.success('Secret key copied!');
+        toast.success('Secret key copied!', {
+          iconTheme: {
+            primary: '#10b981',
+            secondary: '#fff',
+          },
+        });
         setTimeout(() => setKeyCopied(false), 2000);
       }
     }

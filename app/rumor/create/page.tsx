@@ -8,8 +8,9 @@ import Button from '@/components/ui/Button';
 import Textarea from '@/components/ui/Textarea';
 import CustomDropdown from '@/components/ui/CustomDropdown';
 import Card from '@/components/ui/Card';
-import { PlusCircle, AlertCircle, BookOpen, FileText } from 'lucide-react';
-import { rumorAPI } from '@/lib/api';
+import Modal from '@/components/ui/Modal';
+import { PlusCircle, AlertCircle, BookOpen, FileText, HelpCircle, XCircle, CheckCircle } from 'lucide-react';
+import { rumorAPI, voteAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 import type { AreaOfVote } from '@/types';
 
@@ -21,6 +22,7 @@ export default function CreateRumorPage() {
   const [areaOfVote, setAreaOfVote] = useState<AreaOfVote>('General');
   const [votingDuration, setVotingDuration] = useState<number>(48); // hours
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorModal, setErrorModal] = useState<{ isOpen: boolean; message: string }>({ isOpen: false, message: '' });
 
   // Redirect if not authenticated
   React.useEffect(() => {
@@ -66,11 +68,42 @@ export default function CreateRumorPage() {
       const votingEndsAt = calculateVotingEndsAt(votingDuration);
       const result = await rumorAPI.create(content, areaOfVote, votingEndsAt);
       
-      toast.success('Rumor posted successfully!');
+      // Automatically vote in favor of the rumor created
+      try {
+        await voteAPI.submitVote(result.rumor.id, 'FACT');
+      } catch (voteError) {
+        console.warn('Auto-vote failed:', voteError);
+        // Continue even if auto-vote fails
+      }
+      
+      // Show success toast with green checkmark icon
+      toast.success('Rumor posted successfully!', {
+        duration: 4000,
+        icon: '✓',
+        style: {
+          borderRadius: '8px',
+          fontSize: '14px',
+        },
+        iconTheme: {
+          primary: '#10b981',
+          secondary: '#fff',
+        },
+      });
       router.push(`/rumor/${result.rumor.id}`);
     } catch (error: any) {
+      const errorCode = error.response?.data?.code;
       const message = error.response?.data?.message || 'Failed to post rumor';
-      toast.error(message);
+      
+      if (errorCode === 'INVALID_RUMOR') {
+        // Show toast for failed post
+        toast.error('Failed to post rumor');
+        // Show detailed error in modal
+        setErrorModal({ isOpen: true, message });
+      } else {
+        // For other errors, just show toast
+        toast.error(message);
+      }
+      
       setIsSubmitting(false);
     }
   };
@@ -151,8 +184,9 @@ export default function CreateRumorPage() {
                   {/* Form */}
                   <Card>
                     <form onSubmit={handleSubmit} className="space-y-6">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Rumor Content</label>
                       <Textarea
-                        label="Rumor Content"
                         value={content}
                         onChange={(e) => setContent(e.target.value)}
                         placeholder="E.g., I heard that the campus cafeteria will be renovated next month..."
@@ -176,18 +210,26 @@ export default function CreateRumorPage() {
                       </div>
 
                       <div className="mb-8">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Voting Duration
-                        </label>
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Voting Duration
+                          </label>
+                          <div className="relative group">
+                            <HelpCircle className="w-4 h-4 text-gray-400 dark:text-gray-500 cursor-help" />
+                            <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block z-50">
+                              <div className="bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg py-2 px-3 whitespace-nowrap shadow-lg">
+                                How long should the community have to vote on this rumor?
+                                <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900 dark:border-t-gray-700"></div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                         <CustomDropdown
                           value={votingDuration.toString()}
                           onChange={(value) => setVotingDuration(Number(value))}
                           options={durationOptions}
                           placeholder="Select duration"
                         />
-                        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                          How long should the community have to vote on this rumor?
-                        </p>
                       </div>
 
                       {user?.area !== areaOfVote && areaOfVote !== 'General' && (
@@ -274,6 +316,37 @@ export default function CreateRumorPage() {
           </motion.div>
         </div>
       </div>
+
+      {/* Error Modal */}
+      <Modal
+        isOpen={errorModal.isOpen}
+        onClose={() => setErrorModal({ isOpen: false, message: '' })}
+        title="Validation Failed"
+        size="md"
+      >
+        <div className="space-y-4">
+          <div className="flex items-start gap-3">
+            <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
+              <XCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
+            </div>
+            <div className="flex-1">
+              <p className="text-gray-700 dark:text-gray-300">
+                {errorModal.message}
+              </p>
+            </div>
+          </div>
+          <div className="pt-2">
+            <Button
+              variant="primary"
+              size="lg"
+              onClick={() => setErrorModal({ isOpen: false, message: '' })}
+              className="w-full"
+            >
+              OK
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </>
   );
 }

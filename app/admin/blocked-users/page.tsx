@@ -79,7 +79,12 @@ export default function BlockedUsersPage() {
     try {
       await navigator.clipboard.writeText(secretKey);
       setCopiedKey(secretKey);
-      toast.success('Secret key copied to clipboard');
+      toast.success('Secret key copied to clipboard', {
+        iconTheme: {
+          primary: '#10b981',
+          secondary: '#fff',
+        },
+      });
       setTimeout(() => setCopiedKey(null), 2000);
     } catch (error) {
       toast.error('Failed to copy key');
@@ -97,7 +102,12 @@ export default function BlockedUsersPage() {
     
     try {
       await adminAPI.unblockUser(selectedKey);
-      toast.success('User unblocked successfully');
+      toast.success('User unblocked successfully', {
+        iconTheme: {
+          primary: '#10b981',
+          secondary: '#fff',
+        },
+      });
       await loadBlockedUsers(); // Refresh list
     } catch (error: any) {
       const message = error.response?.data?.message || 'Failed to unblock user';
