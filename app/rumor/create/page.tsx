@@ -2,14 +2,14 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import Button from '@/components/ui/Button';
 import Textarea from '@/components/ui/Textarea';
 import Select from '@/components/ui/Select';
 import Card from '@/components/ui/Card';
 import Modal from '@/components/ui/Modal';
-import { PlusCircle, AlertCircle, CheckCircle, Sparkles, Check, X } from 'lucide-react';
+import { PlusCircle, AlertCircle, CheckCircle, Sparkles, Check, X, BookOpen, FileText } from 'lucide-react';
 import { rumorAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 import type { AreaOfVote, AIValidation } from '@/types';
@@ -17,6 +17,7 @@ import type { AreaOfVote, AIValidation } from '@/types';
 export default function CreateRumorPage() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const [activeTab, setActiveTab] = useState<'post' | 'instructions'>('post');
   const [content, setContent] = useState('');
   const [areaOfVote, setAreaOfVote] = useState<AreaOfVote>('General');
   const [votingDuration, setVotingDuration] = useState<number>(48); // hours
@@ -122,108 +123,190 @@ export default function CreateRumorPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
           >
-            {/* Header */}
-            <div className="mb-8 text-center">
-              <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-                Post a Rumor
-              </h1>
-              <p className="text-lg text-gray-600 dark:text-gray-400">
-                Share anonymous rumors for community verification
-              </p>
+            {/* Tab Switch */}
+            <div className="mb-8 flex items-center justify-center">
+              <div className="relative bg-gray-200 dark:bg-gray-800 p-1.5 rounded-2xl inline-flex">
+                <motion.div
+                  className="absolute top-1.5 bottom-1.5 bg-white dark:bg-gray-700 rounded-xl shadow-md"
+                  animate={{
+                    left: activeTab === 'post' ? '6px' : '50%',
+                    right: activeTab === 'post' ? '50%' : '6px',
+                  }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                />
+                <button
+                  onClick={() => setActiveTab('post')}
+                  className={`relative z-10 px-8 py-4 rounded-xl text-base font-semibold transition-colors duration-200 ${
+                    activeTab === 'post'
+                      ? 'text-blue-600 dark:text-blue-400'
+                      : 'text-gray-600 dark:text-gray-400'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <FileText className="w-5 h-5" />
+                    <span>Post Rumor</span>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('instructions')}
+                  className={`relative z-10 px-8 py-4 rounded-xl text-base font-semibold transition-colors duration-200 ${
+                    activeTab === 'instructions'
+                      ? 'text-blue-600 dark:text-blue-400'
+                      : 'text-gray-600 dark:text-gray-400'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <BookOpen className="w-5 h-5" />
+                    <span>Instructions</span>
+                  </div>
+                </button>
+              </div>
             </div>
 
-            {/* Info Card */}
-            <Card className="mb-6 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
-              <div className="flex items-start space-x-3">
-                <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm text-blue-800 dark:text-blue-300 mb-2">
-                    <strong>Important Guidelines:</strong>
-                  </p>
-                  <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1 list-disc list-inside">
-                    <li>Post only unverified information (rumors), not established facts</li>
-                    <li>AI will validate your rumor before posting</li>
-                    <li>Choose the appropriate area for better accuracy</li>
-                    <li>False rumors will result in point deductions</li>
-                  </ul>
-                </div>
-              </div>
-            </Card>
+            {/* Tab Content */}
+            <AnimatePresence mode="wait">
+              {activeTab === 'post' ? (
+                <motion.div
+                  key="post-tab"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.3, ease: 'easeInOut' }}
+                >
+                  {/* Form */}
+                  <Card>
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                      <Textarea
+                        label="Rumor Content"
+                        value={content}
+                        onChange={(e) => setContent(e.target.value)}
+                        placeholder="E.g., I heard that the campus cafeteria will be renovated next month..."
+                        rows={6}
+                        required
+                        disabled={isSubmitting || isValidating}
+                        helperText={`${content.length} characters`}
+                        className="resize-none"
+                      />
 
-            {/* Form */}
-            <Card>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <Textarea
-                  label="Rumor Content"
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  placeholder="E.g., I heard that the campus cafeteria will be renovated next month..."
-                  rows={6}
-                  required
-                  disabled={isSubmitting || isValidating}
-                  helperText={`${content.length} characters`}
-                  className="resize-none"
-                />
+                      <Select
+                        label="Area of Vote"
+                        value={areaOfVote}
+                        onChange={(e) => setAreaOfVote(e.target.value as AreaOfVote)}
+                        options={areaOptions}
+                        disabled={isSubmitting || isValidating}
+                      />
 
-                <Select
-                  label="Area of Vote"
-                  value={areaOfVote}
-                  onChange={(e) => setAreaOfVote(e.target.value as AreaOfVote)}
-                  options={areaOptions}
-                  disabled={isSubmitting || isValidating}
-                />
+                      <div>
+                        <Select
+                          label="Voting Duration"
+                          value={votingDuration.toString()}
+                          onChange={(e) => setVotingDuration(Number(e.target.value))}
+                          options={durationOptions}
+                          disabled={isSubmitting || isValidating}
+                        />
+                        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                          How long should the community have to vote on this rumor?
+                        </p>
+                      </div>
 
-                <div>
-                  <Select
-                    label="Voting Duration"
-                    value={votingDuration.toString()}
-                    onChange={(e) => setVotingDuration(Number(e.target.value))}
-                    options={durationOptions}
-                    disabled={isSubmitting || isValidating}
-                  />
-                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                    How long should the community have to vote on this rumor?
-                  </p>
-                </div>
+                      {user?.area !== areaOfVote && areaOfVote !== 'General' && (
+                        <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3 flex items-center space-x-2">
+                          <AlertCircle className="w-5 h-5 text-orange-600 dark:text-orange-400 shrink-0" />
+                          <p className="text-sm text-orange-800 dark:text-orange-300">
+                            You're posting outside your area ({user?.area}). This is allowed, but votes from
+                            within the selected area will have more weight.
+                          </p>
+                        </div>
+                      )}
 
-                {user?.area !== areaOfVote && areaOfVote !== 'General' && (
-                  <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3 flex items-center space-x-2">
-                    <AlertCircle className="w-5 h-5 text-orange-600 dark:text-orange-400 shrink-0" />
-                    <p className="text-sm text-orange-800 dark:text-orange-300">
-                      You're posting outside your area ({user?.area}). This is allowed, but votes from
-                      within the selected area will have more weight.
-                    </p>
-                  </div>
-                )}
+                      <div className="flex space-x-3">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="lg"
+                          onClick={handlePreValidate}
+                          isLoading={isValidating}
+                          disabled={isSubmitting}
+                          className="flex-1"
+                        >
+                          <Sparkles className="w-5 h-5 mr-2" />
+                          Validate with AI
+                        </Button>
 
-                <div className="flex space-x-3">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="lg"
-                    onClick={handlePreValidate}
-                    isLoading={isValidating}
-                    disabled={isSubmitting}
-                    className="flex-1"
-                  >
-                    <Sparkles className="w-5 h-5 mr-2" />
-                    Validate with AI
-                  </Button>
+                        <Button
+                          type="submit"
+                          variant="primary"
+                          size="lg"
+                          isLoading={isSubmitting}
+                          disabled={isValidating}
+                          className="flex-1"
+                        >
+                          <PlusCircle className="w-5 h-5 mr-2" />
+                          Post Rumor
+                        </Button>
+                      </div>
+                    </form>
+                  </Card>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="instructions-tab"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3, ease: 'easeInOut' }}
+                >
+                  <Card>
+                    <div className="space-y-4">
+                      <div>
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                          Posting Guidelines
+                        </h2>
+                      </div>
 
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    size="lg"
-                    isLoading={isSubmitting}
-                    disabled={isValidating}
-                    className="flex-1"
-                  >
-                    <PlusCircle className="w-5 h-5 mr-2" />
-                    Post Rumor
-                  </Button>
-                </div>
-              </form>
-            </Card>
+                      <div className="space-y-3 text-gray-700 dark:text-gray-300">
+                        <p>
+                          <strong>What is a rumor?</strong><br />
+                          Unverified information that hasn't been confirmed. Post something you've heard but aren't sure about.
+                        </p>
+
+                        <p>
+                          <strong>Choose the right area:</strong><br />
+                          Select the most relevant area. Votes from people in that area carry more weight.
+                        </p>
+
+                        <p>
+                          <strong>Use AI validation:</strong><br />
+                          Optional but recommended. Checks if your content qualifies as a rumor and suggests improvements.
+                        </p>
+
+                        <p>
+                          <strong>Voting duration:</strong><br />
+                          48 hours is recommended for most rumors. Use shorter durations for time-sensitive content.
+                        </p>
+
+                        <p className="text-red-600 dark:text-red-400">
+                          <strong>Warning:</strong><br />
+                          False rumors result in point deductions and may affect your reputation score.
+                        </p>
+                      </div>
+
+                      <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <Button
+                          variant="primary"
+                          size="lg"
+                          onClick={() => setActiveTab('post')}
+                          className="w-full"
+                        >
+                          Got It! Let's Post a Rumor
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         </div>
       </div>
