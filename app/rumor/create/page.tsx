@@ -6,13 +6,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import Button from '@/components/ui/Button';
 import Textarea from '@/components/ui/Textarea';
-import Select from '@/components/ui/Select';
+import CustomDropdown from '@/components/ui/CustomDropdown';
 import Card from '@/components/ui/Card';
-import Modal from '@/components/ui/Modal';
-import { PlusCircle, AlertCircle, CheckCircle, Sparkles, Check, X, BookOpen, FileText } from 'lucide-react';
+import { PlusCircle, AlertCircle, BookOpen, FileText } from 'lucide-react';
 import { rumorAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
-import type { AreaOfVote, AIValidation } from '@/types';
+import type { AreaOfVote } from '@/types';
 
 export default function CreateRumorPage() {
   const router = useRouter();
@@ -21,10 +20,7 @@ export default function CreateRumorPage() {
   const [content, setContent] = useState('');
   const [areaOfVote, setAreaOfVote] = useState<AreaOfVote>('General');
   const [votingDuration, setVotingDuration] = useState<number>(48); // hours
-  const [isValidating, setIsValidating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showValidationModal, setShowValidationModal] = useState(false);
-  const [validationResult, setValidationResult] = useState<AIValidation | null>(null);
 
   // Redirect if not authenticated
   React.useEffect(() => {
@@ -56,26 +52,6 @@ export default function CreateRumorPage() {
     return endsAt.toISOString();
   };
 
-  const handlePreValidate = async () => {
-    if (!content.trim()) {
-      toast.error('Please enter rumor content');
-      return;
-    }
-
-    setIsValidating(true);
-
-    try {
-      const votingEndsAt = calculateVotingEndsAt(votingDuration);
-      const validation = await rumorAPI.validateWithAI(content, votingEndsAt);
-      setValidationResult(validation);
-      setShowValidationModal(true);
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Validation failed');
-    } finally {
-      setIsValidating(false);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -88,21 +64,14 @@ export default function CreateRumorPage() {
 
     try {
       const votingEndsAt = calculateVotingEndsAt(votingDuration);
-      const rumor = await rumorAPI.create(content, areaOfVote, votingEndsAt);
+      const result = await rumorAPI.create(content, areaOfVote, votingEndsAt);
       
       toast.success('Rumor posted successfully!');
-      router.push(`/rumor/${rumor.id}`);
+      router.push(`/rumor/${result.rumor.id}`);
     } catch (error: any) {
       const message = error.response?.data?.message || 'Failed to post rumor';
       toast.error(message);
       setIsSubmitting(false);
-    }
-  };
-
-  const handleProceedAfterValidation = () => {
-    setShowValidationModal(false);
-    if (validationResult?.isValid) {
-      handleSubmit(new Event('submit') as any);
     }
   };
 
@@ -126,14 +95,19 @@ export default function CreateRumorPage() {
             {/* Tab Switch */}
             <div className="mb-8 flex items-center justify-center">
               <div className="relative bg-gray-200 dark:bg-gray-800 p-1.5 rounded-2xl inline-flex">
-                <motion.div
-                  className="absolute top-1.5 bottom-1.5 bg-white dark:bg-gray-700 rounded-xl shadow-md"
-                  animate={{
-                    left: activeTab === 'post' ? '6px' : '50%',
-                    right: activeTab === 'post' ? '50%' : '6px',
-                  }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                />
+                {activeTab === 'post' ? (
+                  <motion.div
+                    layoutId="tabSlider"
+                    className="absolute top-1.5 bottom-1.5 left-1.5 right-[50%] bg-white dark:bg-gray-700 rounded-xl shadow-md"
+                    transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+                  />
+                ) : (
+                  <motion.div
+                    layoutId="tabSlider"
+                    className="absolute top-1.5 bottom-1.5 left-[50%] right-1.5 bg-white dark:bg-gray-700 rounded-xl shadow-md"
+                    transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+                  />
+                )}
                 <button
                   onClick={() => setActiveTab('post')}
                   className={`relative z-10 px-8 py-4 rounded-xl text-base font-semibold transition-colors duration-200 ${
@@ -184,28 +158,34 @@ export default function CreateRumorPage() {
                         placeholder="E.g., I heard that the campus cafeteria will be renovated next month..."
                         rows={6}
                         required
-                        disabled={isSubmitting || isValidating}
+                        disabled={isSubmitting}
                         helperText={`${content.length} characters`}
                         className="resize-none"
                       />
 
-                      <Select
-                        label="Area of Vote"
-                        value={areaOfVote}
-                        onChange={(e) => setAreaOfVote(e.target.value as AreaOfVote)}
-                        options={areaOptions}
-                        disabled={isSubmitting || isValidating}
-                      />
-
                       <div>
-                        <Select
-                          label="Voting Duration"
-                          value={votingDuration.toString()}
-                          onChange={(e) => setVotingDuration(Number(e.target.value))}
-                          options={durationOptions}
-                          disabled={isSubmitting || isValidating}
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Area of Vote
+                        </label>
+                        <CustomDropdown
+                          value={areaOfVote}
+                          onChange={(value) => setAreaOfVote(value as AreaOfVote)}
+                          options={areaOptions}
+                          placeholder="Select area"
                         />
-                        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                      </div>
+
+                      <div className="mb-8">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Voting Duration
+                        </label>
+                        <CustomDropdown
+                          value={votingDuration.toString()}
+                          onChange={(value) => setVotingDuration(Number(value))}
+                          options={durationOptions}
+                          placeholder="Select duration"
+                        />
+                        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
                           How long should the community have to vote on this rumor?
                         </p>
                       </div>
@@ -220,32 +200,16 @@ export default function CreateRumorPage() {
                         </div>
                       )}
 
-                      <div className="flex space-x-3">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="lg"
-                          onClick={handlePreValidate}
-                          isLoading={isValidating}
-                          disabled={isSubmitting}
-                          className="flex-1"
-                        >
-                          <Sparkles className="w-5 h-5 mr-2" />
-                          Validate with AI
-                        </Button>
-
-                        <Button
-                          type="submit"
-                          variant="primary"
-                          size="lg"
-                          isLoading={isSubmitting}
-                          disabled={isValidating}
-                          className="flex-1"
-                        >
-                          <PlusCircle className="w-5 h-5 mr-2" />
-                          Post Rumor
-                        </Button>
-                      </div>
+                      <Button
+                        type="submit"
+                        variant="primary"
+                        size="lg"
+                        isLoading={isSubmitting}
+                        className="w-full"
+                      >
+                        <PlusCircle className="w-5 h-5 mr-2" />
+                        Post Rumor
+                      </Button>
                     </form>
                   </Card>
                 </motion.div>
@@ -267,7 +231,7 @@ export default function CreateRumorPage() {
 
                       <div className="space-y-3 text-gray-700 dark:text-gray-300">
                         <p>
-                          <strong>What is a rumor?</strong><br />
+                          <strong>What, what is this?</strong><br />
                           Unverified information that hasn't been confirmed. Post something you've heard but aren't sure about.
                         </p>
 
@@ -277,8 +241,8 @@ export default function CreateRumorPage() {
                         </p>
 
                         <p>
-                          <strong>Use AI validation:</strong><br />
-                          Optional but recommended. Checks if your content qualifies as a rumor and suggests improvements.
+                          <strong>AI validation:</strong><br />
+                          Your rumor will be automatically validated by AI when you submit. If it doesn't qualify as a rumor, you'll be notified.
                         </p>
 
                         <p>
@@ -288,7 +252,7 @@ export default function CreateRumorPage() {
 
                         <p className="text-red-600 dark:text-red-400">
                           <strong>Warning:</strong><br />
-                          False rumors result in point deductions and may affect your reputation score.
+                          False rumors result in HUGE point deductions and will affect your reputation score.
                         </p>
                       </div>
 
@@ -299,7 +263,7 @@ export default function CreateRumorPage() {
                           onClick={() => setActiveTab('post')}
                           className="w-full"
                         >
-                          Got It! Let's Post a Rumor
+                          Let's continue to post
                         </Button>
                       </div>
                     </div>
@@ -310,105 +274,6 @@ export default function CreateRumorPage() {
           </motion.div>
         </div>
       </div>
-
-      {/* Validation Result Modal */}
-      <Modal
-        isOpen={showValidationModal}
-        onClose={() => setShowValidationModal(false)}
-        title="AI Validation Result"
-        size="md"
-      >
-        {validationResult && (
-          <div className="space-y-4">
-            {/* Status */}
-            <div
-              className={`p-4 rounded-lg border ${
-                validationResult.isValid
-                  ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
-                  : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
-              }`}
-            >
-              <div className="flex items-center space-x-2 mb-2">
-                {validationResult.isValid ? (
-                  <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
-                ) : (
-                  <AlertCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
-                )}
-                <h3
-                  className={`font-semibold ${
-                    validationResult.isValid
-                      ? 'text-green-800 dark:text-green-300'
-                      : 'text-red-800 dark:text-red-300'
-                  }`}
-                >
-                  {validationResult.isValid ? 'Validation Passed' : 'Validation Failed'}
-                </h3>
-              </div>
-              {validationResult.reason && (
-                <p
-                  className={`text-sm ${
-                    validationResult.isValid
-                      ? 'text-green-700 dark:text-green-300'
-                      : 'text-red-700 dark:text-red-300'
-                  }`}
-                >
-                  {validationResult.reason}
-                </p>
-              )}
-            </div>
-
-            {/* Details */}
-            <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4">
-              <p className="text-sm text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                <strong>Is Rumor:</strong>{' '}
-                {validationResult.isRumor ? (
-                  <span className="text-green-600 dark:text-green-400 flex items-center gap-1">
-                    Yes <Check className="w-4 h-4" />
-                  </span>
-                ) : (
-                  <span className="text-red-600 dark:text-red-400 flex items-center gap-1">
-                    No <X className="w-4 h-4" />
-                  </span>
-                )}
-              </p>
-              {validationResult.suggestedArea && (
-                <p className="text-sm text-gray-700 dark:text-gray-300 mt-2">
-                  <strong>Suggested Area:</strong> {validationResult.suggestedArea}
-                </p>
-              )}
-            </div>
-
-            {/* Actions */}
-            {validationResult.isValid ? (
-              <div className="flex space-x-3">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowValidationModal(false)}
-                  className="flex-1"
-                >
-                  Edit
-                </Button>
-                <Button
-                  variant="primary"
-                  onClick={handleProceedAfterValidation}
-                  isLoading={isSubmitting}
-                  className="flex-1"
-                >
-                  Post Anyway
-                </Button>
-              </div>
-            ) : (
-              <Button
-                variant="primary"
-                onClick={() => setShowValidationModal(false)}
-                className="w-full"
-              >
-                Edit Rumor
-              </Button>
-            )}
-          </div>
-        )}
-      </Modal>
     </>
   );
 }

@@ -64,13 +64,8 @@ export const rumorAPI = {
     return response.data.rumor;
   },
 
-  create: async (content: string, areaOfVote: string, votingEndsAt: string): Promise<Rumor> => {
-    const response = await api.post<RumorResponse>('/rumors', { content, areaOfVote, votingEndsAt });
-    return response.data.rumor;
-  },
-
-  validateWithAI: async (content: string, votingEndsAt: string): Promise<AIValidation> => {
-    const response = await api.post('/rumors/validate', { content, votingEndsAt });
+  create: async (content: string, areaOfVote: string, votingEndsAt: string): Promise<{ rumor: Rumor; validation: AIValidation }> => {
+    const response = await api.post('/rumors', { content, areaOfVote, votingEndsAt });
     return response.data;
   },
 };
