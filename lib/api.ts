@@ -111,4 +111,80 @@ export const userAPI = {
   },
 };
 
+// Admin APIs
+const adminAPI_instance = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Admin interceptor to add admin token
+adminAPI_instance.interceptors.request.use((config) => {
+  const token = sessionStorage.getItem('admin_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+interface Admin {
+  id: string;
+  createdAt: string;
+  lastLogin: string;
+}
+
+interface BlockedProfile {
+  secretKey: string;
+  isBlocked: boolean;
+  createdAt: string;
+}
+
+interface AdminStats {
+  users: {
+    total: number;
+    totalProfiles: number;
+    active: number;
+    blocked: number;
+  };
+  rumors: {
+    total: number;
+    active: number;
+    finalized: number;
+  };
+  votes: {
+    active: number;
+  };
+  blockchain: {
+    totalBlocks: number;
+  };
+}
+
+export const adminAPI = {
+  login: async (adminKey: string): Promise<{ success: boolean; token: string; admin: Admin }> => {
+    const response = await adminAPI_instance.post('/admin/login', { adminKey });
+    return response.data;
+  },
+
+  verify: async (): Promise<{ success: boolean; admin: Admin }> => {
+    const response = await adminAPI_instance.get('/admin/verify');
+    return response.data;
+  },
+
+  getStats: async (): Promise<AdminStats> => {
+    const response = await adminAPI_instance.get('/admin/dashboard/stats');
+    return response.data;
+  },
+
+  getBlockedUsers: async (): Promise<{ blockedProfiles: BlockedProfile[]; count: number }> => {
+    const response = await adminAPI_instance.get('/admin/dashboard/blocked-users');
+    return response.data;
+  },
+
+  unblockUser: async (secretKey: string): Promise<{ success: boolean; message: string; profile: BlockedProfile }> => {
+    const response = await adminAPI_instance.post('/admin/dashboard/unblock-user', { secretKey });
+    return response.data;
+  },
+};
+
 export default api;
