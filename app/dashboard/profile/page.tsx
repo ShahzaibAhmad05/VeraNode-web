@@ -255,7 +255,11 @@ export default function ProfilePage() {
                       <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
                         <span>{rumor.areaOfVote}</span>
                         <span>•</span>
-                        <span>{rumor.stats.totalVotes} votes</span>
+                        <span>
+                          {rumor.stats.totalVotes === 'hidden' 
+                            ? 'Voting in progress' 
+                            : `${rumor.stats.totalVotes} votes`}
+                        </span>
                         <span>•</span>
                         <span>{formatRelativeTime(rumor.postedAt)}</span>
                       </div>

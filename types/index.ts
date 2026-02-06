@@ -21,14 +21,14 @@ export interface Rumor {
   currentHash: string;
   previousHash: string;
   stats: {
-    totalVotes: number;
-    factVotes: number;
-    lieVotes: number;
-    factWeight: number;
-    lieWeight: number;
-    underAreaVotes: number;
-    notUnderAreaVotes: number;
-    progress: number;
+    totalVotes: number | 'hidden';
+    factVotes: number | 'hidden';
+    lieVotes: number | 'hidden';
+    factWeight: number | 'hidden';
+    lieWeight: number | 'hidden';
+    underAreaVotes: number | 'hidden';
+    notUnderAreaVotes: number | 'hidden';
+    progress: number | 'hidden';
   };
 }
 
@@ -43,9 +43,6 @@ export interface Vote {
 
 export interface VoteStatus {
   hasVoted: boolean;
-  voteType: 'FACT' | 'LIE' | null;
-  weight?: number;
-  timestamp?: string;
 }
 
 export interface VoteResponse {

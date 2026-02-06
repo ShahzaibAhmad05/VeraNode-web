@@ -21,7 +21,6 @@ export default function RumorDetailPage() {
 
   const [rumor, setRumor] = useState<Rumor | null>(null);
   const [hasVoted, setHasVoted] = useState(false);
-  const [existingVote, setExistingVote] = useState<'FACT' | 'LIE' | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
   const [timeRemaining, setTimeRemaining] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0, isExpired: false });
 
@@ -42,7 +41,6 @@ export default function RumorDetailPage() {
 
       setRumor(rumorData);
       setHasVoted(voteStatus.hasVoted);
-      setExistingVote(voteStatus.voteType || undefined);
     } catch (error: any) {
       toast.error('Failed to load rumor');
       router.push('/dashboard');
@@ -88,9 +86,17 @@ export default function RumorDetailPage() {
   }
 
   const stats = rumor.stats;
-  const factPercentage = calculatePercentage(stats.factWeight, stats.factWeight + stats.lieWeight);
-  const underAreaProgress = calculatePercentage(stats.underAreaVotes, stats.totalVotes);
-  const notUnderAreaProgress = stats.notUnderAreaVotes ? calculatePercentage(stats.notUnderAreaVotes, stats.totalVotes) : 0;
+  const statsHidden = stats.totalVotes === 'hidden';
+  
+  const factPercentage = !statsHidden 
+    ? calculatePercentage(stats.factWeight as number, (stats.factWeight as number) + (stats.lieWeight as number))
+    : 50;
+  const underAreaProgress = !statsHidden 
+    ? calculatePercentage(stats.underAreaVotes as number, stats.totalVotes as number)
+    : 0;
+  const notUnderAreaProgress = !statsHidden && stats.notUnderAreaVotes !== 'hidden'
+    ? calculatePercentage(stats.notUnderAreaVotes as number, stats.totalVotes as number) 
+    : 0;
 
   return (
     <div className="min-h-[calc(100vh-4rem)] px-4 py-12">
@@ -145,86 +151,97 @@ export default function RumorDetailPage() {
 
             {/* Voting Progress */}
             <div className="mb-6">
-              <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
-                <span>Fact: {factPercentage}%</span>
-                <span>Lie: {100 - factPercentage}%</span>
-              </div>
-              <div className="relative h-4 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${factPercentage}%` }}
-                  transition={{ duration: 0.6, ease: 'easeOut' }}
-                  className="absolute h-full bg-linear-to-r from-green-500 to-green-600"
-                />
-              </div>
+              {statsHidden ? (
+                <div className="">
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
+                    <span>Fact: {factPercentage}%</span>
+                    <span>Lie: {100 - factPercentage}%</span>
+                  </div>
+                  <div className="relative h-4 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${factPercentage}%` }}
+                      transition={{ duration: 0.6, ease: 'easeOut' }}
+                      className="absolute h-full bg-linear-to-r from-green-500 to-green-600"
+                    />
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
-                <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 mb-1">
-                  <Users className="w-4 h-4" />
-                  <span className="text-xs">Total Votes</span>
-                </div>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {stats.totalVotes}
-                </p>
-              </div>
-
-              <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
-                <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 mb-1">
-                  <CheckCircle className="w-4 h-4" />
-                  <span className="text-xs">Fact Votes</span>
-                </div>
-                <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                  {stats.factVotes}
-                </p>
-              </div>
-
-              <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
-                <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 mb-1">
-                  <XCircle className="w-4 h-4" />
-                  <span className="text-xs">Lie Votes</span>
-                </div>
-                <p className="text-2xl font-bold text-red-600 dark:text-red-400">
-                  {stats.lieVotes}
-                </p>
-              </div>
-
-              <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
-                <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 mb-1">
-                  <Shield className="w-4 h-4" />
-                  <span className="text-xs">Under Area</span>
-                </div>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {stats.underAreaVotes}
-                </p>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                  {underAreaProgress}%
-                </p>
-              </div>
-            </div>
-
-            {/* Additional stats row for not under area votes if available */}
-            {stats.notUnderAreaVotes !== undefined && stats.notUnderAreaVotes > 0 && (
-              <div className="mb-6">
-                <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
+            {!statsHidden && (
+              <>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                  <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                    <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 mb-1">
                       <Users className="w-4 h-4" />
-                      <span className="text-sm">Not Under Area Votes</span>
+                      <span className="text-xs">Total Votes</span>
                     </div>
-                    <div className="text-right">
-                      <p className="text-xl font-bold text-gray-900 dark:text-white">
-                        {stats.notUnderAreaVotes}
-                      </p>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">
-                        {notUnderAreaProgress}%
-                      </p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {stats.totalVotes}
+                    </p>
+                  </div>
+
+                  <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                    <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 mb-1">
+                      <CheckCircle className="w-4 h-4" />
+                      <span className="text-xs">Fact Votes</span>
                     </div>
+                    <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                      {stats.factVotes}
+                    </p>
+                  </div>
+
+                  <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                    <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 mb-1">
+                      <XCircle className="w-4 h-4" />
+                      <span className="text-xs">Lie Votes</span>
+                    </div>
+                    <p className="text-2xl font-bold text-red-600 dark:text-red-400">
+                      {stats.lieVotes}
+                    </p>
+                  </div>
+
+                  <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                    <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 mb-1">
+                      <Shield className="w-4 h-4" />
+                      <span className="text-xs">Under Area</span>
+                    </div>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {stats.underAreaVotes}
+                    </p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                      {underAreaProgress}%
+                    </p>
                   </div>
                 </div>
-              </div>
+
+                {/* Additional stats row for not under area votes if available */}
+                {stats.notUnderAreaVotes !== 'hidden' && stats.notUnderAreaVotes !== undefined && (stats.notUnderAreaVotes as number) > 0 && (
+                  <div className="mb-6">
+                    <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
+                          <Users className="w-4 h-4" />
+                          <span className="text-sm">Not Under Area Votes</span>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xl font-bold text-gray-900 dark:text-white">
+                            {stats.notUnderAreaVotes}
+                          </p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">
+                            {notUnderAreaProgress}%
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
 
             {/* Timer */}
@@ -234,7 +251,7 @@ export default function RumorDetailPage() {
                   <div className="flex items-center space-x-2">
                     <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                     <span className="text-sm font-medium text-blue-800 dark:text-blue-300">
-                      Voting ends in:
+                      Rumor will be uncovered in:
                     </span>
                   </div>
                   <span className="text-lg font-bold text-blue-900 dark:text-blue-200">
@@ -249,7 +266,6 @@ export default function RumorDetailPage() {
               rumor={rumor}
               onVoteSuccess={handleVoteSuccess}
               hasVoted={hasVoted}
-              existingVote={existingVote}
             />
           </Card>
 

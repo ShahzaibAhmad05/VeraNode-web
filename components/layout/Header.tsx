@@ -65,10 +65,7 @@ const Header: React.FC = () => {
               whileHover={{ scale: 1.05 }}
               className="flex items-center space-x-2"
             >
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center dark:bg-blue-500">
-                <span className="text-white font-bold text-lg">V</span>
-              </div>
-              <span className="text-xl font-bold text-gray-900 dark:text-white">
+              <span className="pl-3 text-2xl font-bold text-gray-900 dark:text-white">
                 VeraNode
               </span>
             </motion.div>
@@ -76,7 +73,7 @@ const Header: React.FC = () => {
 
           {/* Navigation */}
           {isAuthenticated && (
-            <nav className="hidden md:flex items-center space-x-1">
+            <nav className="hidden md:flex items-center space-x-3">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = pathname === item.href;

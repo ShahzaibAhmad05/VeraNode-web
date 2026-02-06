@@ -14,14 +14,12 @@ interface VotingInterfaceProps {
   rumor: Rumor;
   onVoteSuccess: () => void;
   hasVoted: boolean;
-  existingVote?: 'FACT' | 'LIE';
 }
 
 const VotingInterface: React.FC<VotingInterfaceProps> = ({
   rumor,
   onVoteSuccess,
   hasVoted,
-  existingVote,
 }) => {
   const { user } = useAuth();
   const [isVoting, setIsVoting] = useState(false);
@@ -53,7 +51,7 @@ const VotingInterface: React.FC<VotingInterfaceProps> = ({
       const response = await voteAPI.submitVote(rumor.id, voteType);
       
       if (response.success) {
-        toast.success(`Vote submitted successfully! Weight: ${response.weight.toFixed(1)}`);
+        toast.success(`Vote submitted successfully!`);
         onVoteSuccess();
       } else {
         toast.error('Failed to submit vote');
@@ -77,12 +75,15 @@ const VotingInterface: React.FC<VotingInterfaceProps> = ({
     );
   }
 
-  if (hasVoted && existingVote) {
+  if (hasVoted) {
     return (
       <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-        <p className="text-blue-800 dark:text-blue-300 text-center font-medium">
-          You voted: <strong>{existingVote}</strong>
-        </p>
+        <div className="flex items-center justify-center space-x-2">
+          <CheckCircle className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+          <p className="text-blue-800 dark:text-blue-300 font-medium">
+            You have already voted on this rumor
+          </p>
+        </div>
       </div>
     );
   }

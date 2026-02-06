@@ -89,7 +89,8 @@ export const voteAPI = {
 
   getUserVotes: async (): Promise<Vote[]> => {
     const response = await api.get('/votes/my-votes');
-    return response.data;
+    // Handle both direct array and wrapped response
+    return Array.isArray(response.data) ? response.data : (response.data.votes || []);
   },
 };
 

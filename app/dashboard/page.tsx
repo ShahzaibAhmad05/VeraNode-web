@@ -10,7 +10,7 @@ import Button from '@/components/ui/Button';
 import RumorCard from '@/components/features/RumorCard';
 import { ScrollReveal } from '@/components/ui/ScrollReveal';
 import { Filter, PlusCircle, AlertCircle } from 'lucide-react';
-import { rumorAPI } from '@/lib/api';
+import { rumorAPI, voteAPI } from '@/lib/api';
 import type { Rumor } from '@/types';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -20,8 +20,9 @@ export default function DashboardPage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [rumors, setRumors] = useState<Rumor[]>([]);
   const [filteredRumors, setFilteredRumors] = useState<Rumor[]>([]);
+  const [votedRumorIds, setVotedRumorIds] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
-  const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'locked' | 'final'>('all');
+  const [activeFilter, setActiveFilter] = useState<'new' | 'voted' | 'final'>('new');
   const [areaFilter, setAreaFilter] = useState<string>('all');
 
   // Redirect if not authenticated
@@ -35,14 +36,27 @@ export default function DashboardPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const rumorsData = await rumorAPI.getAll();
+        const [rumorsData, userVotes] = await Promise.all([
+          rumorAPI.getAll(),
+          voteAPI.getUserVotes(),
+        ]);
 
         setRumors(Array.isArray(rumorsData) ? rumorsData : []);
         setFilteredRumors(Array.isArray(rumorsData) ? rumorsData : []);
+        
+        // Store voted rumor IDs
+        const votedIds = new Set(
+          Array.isArray(userVotes) 
+            ? userVotes.map(vote => vote.rumorId)
+            : []
+        );
+        setVotedRumorIds(votedIds);
       } catch (error: any) {
+        console.error('Failed to load data:', error);
         toast.error('Failed to load dashboard data');
         setRumors([]);
         setFilteredRumors([]);
+        setVotedRumorIds(new Set());
       } finally {
         setIsLoading(false);
       }
@@ -63,11 +77,14 @@ export default function DashboardPage() {
     let filtered = [...rumors];
 
     // Status filter
-    if (activeFilter === 'active') {
-      filtered = filtered.filter((r) => !r.isLocked && !r.isFinal);
-    } else if (activeFilter === 'locked') {
-      filtered = filtered.filter((r) => r.isLocked && !r.isFinal);
+    if (activeFilter === 'new') {
+      // New: active rumors that user hasn't voted on
+      filtered = filtered.filter((r) => !r.isFinal && !votedRumorIds.has(r.id));
+    } else if (activeFilter === 'voted') {
+      // Voted: rumors user has voted on (not yet final)
+      filtered = filtered.filter((r) => !r.isFinal && votedRumorIds.has(r.id));
     } else if (activeFilter === 'final') {
+      // Final: finalized rumors
       filtered = filtered.filter((r) => r.isFinal);
     }
 
@@ -77,7 +94,7 @@ export default function DashboardPage() {
     }
 
     setFilteredRumors(filtered);
-  }, [activeFilter, areaFilter, rumors]);
+  }, [activeFilter, areaFilter, rumors, votedRumorIds]);
 
   if (authLoading || isLoading) {
     return (
@@ -88,43 +105,33 @@ export default function DashboardPage() {
   }
 
   const filters = [
-    { value: 'all', label: 'All', count: Array.isArray(rumors) ? rumors.length : 0 },
-    { value: 'active', label: 'Active', count: Array.isArray(rumors) ? rumors.filter((r) => !r.isLocked && !r.isFinal).length : 0 },
-    { value: 'locked', label: 'Locked', count: Array.isArray(rumors) ? rumors.filter((r) => r.isLocked && !r.isFinal).length : 0 },
+    { value: 'new', label: 'New', count: Array.isArray(rumors) ? rumors.filter((r) => !r.isFinal && !votedRumorIds.has(r.id)).length : 0 },
+    { value: 'voted', label: 'Voted', count: Array.isArray(rumors) ? rumors.filter((r) => !r.isFinal && votedRumorIds.has(r.id)).length : 0 },
     { value: 'final', label: 'Final', count: Array.isArray(rumors) ? rumors.filter((r) => r.isFinal).length : 0 },
   ];
 
   const areaOptions = ['all', 'General', 'SEECS', 'NBS', 'ASAB', 'SINES', 'SCME', 'S3H'];
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] px-4 py-8">
+    <div className="min-h-[calc(100vh-4rem)] px-8 py-8">
       <div className="container mx-auto max-w-7xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
         >
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-              Dashboard
-            </h1>
-            <p className="text-lg text-gray-600 dark:text-gray-400">
-              Discover truth with complete anonymity
-            </p>
-          </div>
 
           {/* Action Bar */}
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 space-y-4 md:space-y-0">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-14 mt-4 space-y-4 md:space-y-0">
             <div className="flex items-center space-x-2">
               <Filter className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Filter:</span>
-              <div className="flex space-x-2">
+              <span className="text-lg font-semibold pr-2 text-gray-700 dark:text-gray-300 ">Filter:</span>
+              <div className="flex space-x-4">
                 {filters.map((filter) => (
                   <button
                     key={filter.value}
                     onClick={() => setActiveFilter(filter.value as any)}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                    className={`px-4 py-2 rounded-2xl text-md font-medium transition-colors ${
                       activeFilter === filter.value
                         ? 'bg-blue-600 dark:bg-blue-500 text-white'
                         : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
@@ -150,8 +157,8 @@ export default function DashboardPage() {
               </select>
 
               <Link href="/rumor/create">
-                <Button variant="primary" size="md">
-                  <PlusCircle className="w-4 h-4 mr-2" />
+                <Button variant="primary" size="md" className="flex items-center px-4 py-3 rounded-2xl">
+                  <PlusCircle className="w-6 h-6 mr-2" />
                   Post Rumor
                 </Button>
               </Link>
@@ -160,20 +167,22 @@ export default function DashboardPage() {
 
           {/* Rumors Feed */}
           {filteredRumors.length === 0 ? (
-            <Card hover={false} className="text-center py-12">
+            <Card hover={false} className="text-center py-12 mx-4">
               <AlertCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                 No rumors found
               </h3>
               <p className="text-gray-600 dark:text-gray-400 mb-6">
-                {activeFilter === 'all'
-                  ? 'Be the first to post a rumor!'
+                {activeFilter === 'new'
+                  ? 'No new rumors to vote on. Check back later!'
+                  : activeFilter === 'voted'
+                  ? "You haven't voted on any active rumors yet."
                   : 'Try adjusting your filters'}
               </p>
-              {activeFilter === 'all' && (
+              {activeFilter === 'new' && (
                 <Link href="/rumor/create">
                   <Button variant="primary" size="lg">
-                    Post Your First Rumor
+                    Post One?
                   </Button>
                 </Link>
               )}

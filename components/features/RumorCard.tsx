@@ -63,9 +63,13 @@ const RumorCard: React.FC<RumorCardProps> = ({ rumor }) => {
     );
   };
 
-  const totalVotesWeight = rumor.stats.factWeight + rumor.stats.lieWeight;
-  const factPercentage = totalVotesWeight > 0 
-    ? Math.round((rumor.stats.factWeight / totalVotesWeight) * 100) 
+  const statsHidden = rumor.stats.totalVotes === 'hidden';
+  
+  const totalVotesWeight = !statsHidden 
+    ? (rumor.stats.factWeight as number) + (rumor.stats.lieWeight as number)
+    : 0;
+  const factPercentage = !statsHidden && totalVotesWeight > 0 
+    ? Math.round(((rumor.stats.factWeight as number) / totalVotesWeight) * 100) 
     : 50;
 
   return (
@@ -91,28 +95,37 @@ const RumorCard: React.FC<RumorCardProps> = ({ rumor }) => {
         {/* Voting Progress */}
         {!rumor.isFinal && (
           <div className="mb-4">
-            <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
-              <span>Fact: {factPercentage}%</span>
-              <span>Lie: {100 - factPercentage}%</span>
-            </div>
-            <div className="relative h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${factPercentage}%` }}
-                transition={{ duration: 0.5, ease: 'easeOut' }}
-                className="absolute h-full bg-linear-to-r from-green-500 to-green-600"
-              />
-            </div>
+            {statsHidden ? (
+              <div className="">
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
+                  <span>Fact: {factPercentage}%</span>
+                  <span>Lie: {100 - factPercentage}%</span>
+                </div>
+                <div className="relative h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${factPercentage}%` }}
+                    transition={{ duration: 0.5, ease: 'easeOut' }}
+                    className="absolute h-full bg-linear-to-r from-green-500 to-green-600"
+                  />
+                </div>
+              </>
+            )}
           </div>
         )}
 
         {/* Stats */}
         <div className="flex items-center justify-between text-sm">
           <div className="flex items-center space-x-4 text-gray-600 dark:text-gray-400">
-            <div className="flex items-center space-x-1">
-              <Users className="w-4 h-4" />
-              <span>{rumor.stats.totalVotes} votes</span>
-            </div>
+            {!statsHidden && (
+              <div className="flex items-center space-x-1">
+                <Users className="w-4 h-4" />
+                <span>{rumor.stats.totalVotes} votes</span>
+              </div>
+            )}
             {!rumor.isLocked && (
               <div className="flex items-center space-x-1">
                 <Clock className="w-4 h-4" />
