@@ -12,7 +12,7 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (secretKey: string) => Promise<void>;
-  register: (email: string, password: string, department: string) => Promise<{ secretKey: string }>;
+  register: (email: string, password: string, department: string, previousSecretKey?: string) => Promise<{ secretKey: string; recovered?: boolean }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -105,22 +105,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
     } catch (error: any) {
-      const message = error.response?.data?.message || 'Login failed';
-      toast.error(message);
+      const errorCode = error.response?.data?.code;
+      const message = error.response?.data?.error || error.response?.data?.message || 'Login failed';
+      
+      // Handle KEY_EXPIRED error specifically
+      if (errorCode === 'KEY_EXPIRED') {
+        toast.error('Your key has expired. You can recover your account by registering again.', {
+          duration: 5000,
+        });
+      } else {
+        toast.error(message);
+      }
+      
       throw error;
     }
   };
 
-  const register = async (email: string, password: string, department: string) => {
+  const register = async (email: string, password: string, department: string, previousSecretKey?: string) => {
     try {
-      const response = await authAPI.register(email, password, department);
+      const response = await authAPI.register(email, password, department, previousSecretKey);
+      
+      // Show success message based on whether account was recovered
+      if (response.recovered) {
+        toast.success('Account recovered successfully! Your data has been preserved.', {
+          duration: 5000,
+          iconTheme: {
+            primary: '#10b981',
+            secondary: '#fff',
+          },
+        });
+      }
       
       // Don't auto-login after registration - user needs to save secret key first
       // Just return the secret key to display in the UI
-      return { secretKey: response.secretKey };
+      return { 
+        secretKey: response.secretKey,
+        recovered: response.recovered 
+      };
     } catch (error: any) {
+      const errorCode = error.response?.data?.code;
       const message = error.response?.data?.message || 'Registration failed';
-      toast.error(message);
+      
+      // Handle specific error codes
+      if (errorCode === 'INVALID_PREVIOUS_KEY') {
+        toast.error('Previous key not found. Proceeding with normal registration.');
+      } else if (errorCode === 'KEY_NOT_EXPIRED') {
+        toast.error('This key is still valid. Please use it to login.');
+      } else {
+        toast.error(message);
+      }
+      
       throw error;
     }
   };

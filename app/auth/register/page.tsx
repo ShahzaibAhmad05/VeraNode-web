@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import Button from '@/components/ui/Button';
@@ -17,6 +17,7 @@ type Step = 'email' | 'password' | 'verifying' | 'success';
 
 export default function RegisterPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { register, isAuthenticated } = useAuth();
   const [step, setStep] = useState<Step>('email');
   const [email, setEmail] = useState('');
@@ -25,6 +26,18 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [generatedSecretKey, setGeneratedSecretKey] = useState('');
   const [keyCopied, setKeyCopied] = useState(false);
+  const [hasRecoveryKey, setHasRecoveryKey] = useState(false);
+  const [previousSecretKey, setPreviousSecretKey] = useState('');
+  const [isRecovered, setIsRecovered] = useState(false);
+
+  // Check for expired key from URL params
+  useEffect(() => {
+    const expiredKey = searchParams.get('expiredKey');
+    if (expiredKey) {
+      setHasRecoveryKey(true);
+      setPreviousSecretKey(expiredKey);
+    }
+  }, [searchParams]);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -76,8 +89,14 @@ export default function RegisterPage() {
     // Simulate verification delay for smooth UX
     setTimeout(async () => {
       try {
-        const response = await register(email, password, department);
+        const response = await register(
+          email, 
+          password, 
+          department, 
+          hasRecoveryKey && previousSecretKey ? previousSecretKey : undefined
+        );
         setGeneratedSecretKey(response.secretKey);
+        setIsRecovered(response.recovered || false);
         
         // Short delay before showing success
         setTimeout(() => {
@@ -153,11 +172,11 @@ export default function RegisterPage() {
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                   Create account
                 </h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                   Let's get started with your university email
                 </p>
 
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <Input
                     label="University email"
                     type="email"
@@ -178,14 +197,14 @@ export default function RegisterPage() {
                   <Button
                     onClick={handleEmailNext}
                     variant="primary"
-                    className="w-full mt-6"
+                    className="w-full mt-4"
                   >
                     Next
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
 
-                <div className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
+                <div className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
                   Already have an account?{' '}
                   <Link href="/auth/login" className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
                     Sign in
@@ -204,38 +223,73 @@ export default function RegisterPage() {
               >
                 <button
                   onClick={handleBack}
-                  className="flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-6 transition-colors"
+                  className="flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-4 transition-colors"
                 >
                   <ArrowLeft className="w-4 h-4 mr-1" />
                   Back
                 </button>
 
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                   Enter password
                 </h2>
-                <p className="text-sm text-gray-500 dark:text-gray-500 mb-1">
-                  Type your password for this email account:
-                </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
                   {email}
                 </p>
 
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <Input
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter here"
+                    placeholder="Password (min 8 characters)"
                     showPasswordToggle
                     onKeyDown={(e) => e.key === 'Enter' && handlePasswordNext()}
                     autoFocus
-                    helperText="Minimum 8 characters"
                   />
+
+                  {/* Recovery Section */}
+                  <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={hasRecoveryKey}
+                        onChange={(e) => {
+                          setHasRecoveryKey(e.target.checked);
+                          if (!e.target.checked) {
+                            setPreviousSecretKey('');
+                          }
+                        }}
+                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-gray-700 dark:text-gray-300">
+                        I have a previous secret key to recover
+                      </span>
+                    </label>
+
+                    <AnimatePresence>
+                      {hasRecoveryKey && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="mt-2"
+                        >
+                          <Input
+                            type="password"
+                            value={previousSecretKey}
+                            onChange={(e) => setPreviousSecretKey(e.target.value)}
+                            placeholder="Enter your expired secret key"
+                            showPasswordToggle
+                          />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
 
                   <Button
                     onClick={handlePasswordNext}
                     variant="primary"
-                    className="w-full mt-6"
+                    className="w-full mt-4"
                   >
                     Create account
                   </Button>
@@ -286,12 +340,22 @@ export default function RegisterPage() {
                     <CheckCircle className="w-10 h-10 text-green-600 dark:text-green-400" />
                   </motion.div>
                   <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                    Account created successfully
+                    {isRecovered ? 'Account recovered successfully' : 'Account created successfully'}
                   </h2>
                   <p className="text-sm text-gray-600 dark:text-gray-400 px-4">
-                    This secret key cannot be recovered later, save it right now!
+                    {isRecovered 
+                      ? 'Your data has been preserved! Save your new secret key.' 
+                      : 'This secret key cannot be recovered later, save it right now!'}
                   </p>
                 </div>
+
+                {isRecovered && (
+                  <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                    <p className="text-sm text-blue-800 dark:text-blue-300">
+                      Your points, rumors, and votes have been preserved.
+                    </p>
+                  </div>
+                )}
 
                 <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 mb-4">
                   <div className="flex items-center justify-between mb-2">

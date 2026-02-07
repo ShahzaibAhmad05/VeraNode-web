@@ -31,8 +31,29 @@ export const authAPI = {
     return response.data;
   },
 
-  register: async (email: string, password: string, department: string): Promise<{ secretKey: string; profile: User; message: string }> => {
-    const response = await api.post('/auth/register', { email, password, department });
+  register: async (email: string, password: string, department: string, previousSecretKey?: string): Promise<{ 
+    secretKey: string; 
+    profile: User; 
+    message: string;
+    recovered?: boolean;
+  }> => {
+    const response = await api.post('/auth/register', { 
+      email, 
+      password, 
+      department,
+      ...(previousSecretKey && { previousSecretKey })
+    });
+    return response.data;
+  },
+
+  checkKeyStatus: async (secretKey: string): Promise<{
+    exists: boolean;
+    isExpired: boolean;
+    canRecover: boolean;
+    expiresAt?: string;
+    message: string;
+  }> => {
+    const response = await api.post('/auth/check-key-status', { secretKey });
     return response.data;
   },
 

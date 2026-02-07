@@ -33,7 +33,19 @@ export default function LoginPage() {
       await login(secretKey);
       // Navigation is handled in AuthContext after successful login
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Login failed. Please check your secret key.');
+      const errorCode = err.response?.data?.code;
+      const errorMessage = err.response?.data?.error || err.response?.data?.message || 'Login failed. Please check your secret key.';
+      
+      // Handle KEY_EXPIRED error - redirect to registration
+      if (errorCode === 'KEY_EXPIRED') {
+        setError('Your secret key has expired. Redirecting to account recovery...');
+        setTimeout(() => {
+          router.push(`/auth/register?expiredKey=${encodeURIComponent(secretKey)}`);
+        }, 2000);
+      } else {
+        setError(errorMessage);
+      }
+      
       setIsLoading(false);
     }
   };

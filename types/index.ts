@@ -9,6 +9,8 @@ export interface User {
   points?: number;
   isBlocked: boolean;
   createdAt: string;
+  keyExpiresAt?: string;
+  isKeyExpired?: boolean;
 }
 
 export interface Rumor {

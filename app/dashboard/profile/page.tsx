@@ -23,6 +23,19 @@ export default function ProfilePage() {
   const [showSecretKeyModal, setShowSecretKeyModal] = useState(false);
   const [keyCopied, setKeyCopied] = useState(false);
 
+  // Calculate days until expiration
+  const getDaysUntilExpiration = () => {
+    if (!user?.keyExpiresAt) return null;
+    const expiresAt = new Date(user.keyExpiresAt);
+    const now = new Date();
+    const diffTime = expiresAt.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
+  const daysUntilExpiration = getDaysUntilExpiration();
+  const showExpirationWarning = daysUntilExpiration !== null && daysUntilExpiration <= 7 && daysUntilExpiration > 0;
+
   // Redirect if not authenticated
   React.useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -100,6 +113,48 @@ export default function ProfilePage() {
               </p>
             </div>
 
+            {/* Key Expiration Warning */}
+            {showExpirationWarning && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg"
+              >
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-yellow-800 dark:text-yellow-300 mb-1">
+                      Key Expiring Soon
+                    </p>
+                    <p className="text-sm text-yellow-700 dark:text-yellow-400">
+                      Your secret key will expire in {daysUntilExpiration} {daysUntilExpiration === 1 ? 'day' : 'days'}. 
+                      After expiration, you can recover your account by registering again with your expired key.
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {user?.isKeyExpired && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg"
+              >
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-red-800 dark:text-red-300 mb-1">
+                      Key Expired
+                    </p>
+                    <p className="text-sm text-red-700 dark:text-red-400">
+                      Your secret key has expired. Please register again to recover your account and preserve your data.
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
             {/* Profile Info Card */}
             <Card className="mb-6">
               <div className="flex items-start justify-between">
@@ -114,6 +169,15 @@ export default function ProfilePage() {
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
                       {secretKey ? `Key: ${secretKey.substring(0, 16)}...` : 'No key available'}
                     </p>
+                    {user?.keyExpiresAt && (
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                        Key expires: {new Date(user.keyExpiresAt).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </p>
+                    )}
                     <div className="flex items-center space-x-2">
                       <Badge variant="info">{user?.area}</Badge>
                       <Badge
