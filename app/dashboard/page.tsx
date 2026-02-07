@@ -68,6 +68,22 @@ export default function DashboardPage() {
     }
   }, [isAuthenticated, authLoading]);
 
+  // Auto-select filter on initial load
+  useEffect(() => {
+    if (!Array.isArray(rumors) || rumors.length === 0) return;
+
+    const newCount = rumors.filter((r) => !r.isFinal && !votedRumorIds.has(r.id)).length;
+    const votedCount = rumors.filter((r) => !r.isFinal && votedRumorIds.has(r.id)).length;
+    const lockCount = rumors.filter((r) => r.isFinal).length;
+
+    // Auto-select appropriate filter
+    if (newCount === 0 && votedCount > 0) {
+      setActiveFilter('voted');
+    } else if (newCount === 0 && votedCount === 0 && lockCount > 0) {
+      setActiveFilter('final');
+    }
+  }, [rumors, votedRumorIds]);
+
   // Apply filters
   useEffect(() => {
     if (!Array.isArray(rumors)) {
@@ -85,7 +101,7 @@ export default function DashboardPage() {
       // Voted: rumors user has voted on (not yet final)
       filtered = filtered.filter((r) => !r.isFinal && votedRumorIds.has(r.id));
     } else if (activeFilter === 'final') {
-      // Final: finalized rumors
+      // Lock: finalized rumors
       filtered = filtered.filter((r) => r.isFinal);
     }
 
@@ -108,7 +124,7 @@ export default function DashboardPage() {
   const filters = [
     { value: 'new', label: 'New', count: Array.isArray(rumors) ? rumors.filter((r) => !r.isFinal && !votedRumorIds.has(r.id)).length : 0 },
     { value: 'voted', label: 'Voted', count: Array.isArray(rumors) ? rumors.filter((r) => !r.isFinal && votedRumorIds.has(r.id)).length : 0 },
-    { value: 'final', label: 'Final', count: Array.isArray(rumors) ? rumors.filter((r) => r.isFinal).length : 0 },
+    { value: 'final', label: 'Lock', count: Array.isArray(rumors) ? rumors.filter((r) => r.isFinal).length : 0 },
   ];
 
   const areaOptions = [
