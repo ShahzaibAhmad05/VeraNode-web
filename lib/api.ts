@@ -18,14 +18,36 @@ const publicAPI = axios.create({
   },
 });
 
-// Interceptor to add auth token for authenticated requests
+// Interceptor to add secret key header for authenticated requests
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('auth_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  if (typeof window !== 'undefined') {
+    const secretKey = localStorage.getItem('secret_key');
+    if (secretKey) {
+      config.headers['X-Secret-Key'] = secretKey;
+    } else {
+      console.warn('⚠️ No secret_key found in localStorage. User may not be authenticated.');
+    }
   }
   return config;
+}, (error) => {
+  return Promise.reject(error);
 });
+
+// Add response interceptor for better error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      console.error('❌ Authentication error:', error.response?.data);
+      // Check if it's an invalid secret key error
+      if (error.response?.data?.error?.includes('INVALID_SECRET_KEY') || 
+          error.response?.data?.message?.includes('Invalid secret key')) {
+        console.error('❌ Invalid secret key detected. User may need to re-authenticate.');
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 // Auth APIs
 export const authAPI = {
@@ -36,6 +58,10 @@ export const authAPI = {
     admin?: any;
   }> => {
     const response = await api.post('/auth/login', { secretKey });
+    if (typeof window !== 'undefined' && response.data.token) {
+      localStorage.setItem('auth_token', response.data.token);
+      localStorage.setItem('secret_key', secretKey);
+    }
     return response.data;
   },
 
@@ -109,19 +135,18 @@ export const rumorAPI = {
 
 // Vote APIs
 export const voteAPI = {
-  submitVote: async (rumorId: string, voteType: 'FACT' | 'LIE'): Promise<VoteResponse> => {
-    const response = await api.post<VoteResponse>('/voting/vote', { rumorId, voteType });
+  submitVote: async (rumorId: string, voteType: 'FACT' | 'LIE'): Promise<any> => {
+    const response = await api.post('/voting/vote', { rumorId, voteType });
     return response.data;
   },
 
   checkVoted: async (rumorId: string): Promise<VoteStatus> => {
-    const response = await api.get<VoteStatus>(`/voting/status/${rumorId}`);
+    const response = await api.get(`/voting/status/${rumorId}`);
     return response.data;
   },
 
   getUserVotes: async (): Promise<Vote[]> => {
-    const response = await api.get('/votes/my-votes');
-    // Handle both direct array and wrapped response
+    const response = await api.get('/voting/my-votes');
     return Array.isArray(response.data) ? response.data : (response.data.votes || []);
   },
 };

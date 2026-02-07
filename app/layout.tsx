@@ -7,6 +7,7 @@ import { SmoothScrollProvider } from "@/contexts/SmoothScrollProvider";
 import { Toaster } from "react-hot-toast";
 import Header from "@/components/layout/Header";
 import { FloatingBackground } from "@/components/ui/FloatingBackground";
+import AuthDebugLoader from "@/components/debug/AuthDebugLoader";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -43,6 +44,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen bg-white dark:bg-gray-950">
         <FloatingBackground />
+        <AuthDebugLoader />
         <AuthProvider>
           <AdminAuthProvider>
             <SmoothScrollProvider>

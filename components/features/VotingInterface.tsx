@@ -57,7 +57,79 @@ const VotingInterface: React.FC<VotingInterfaceProps> = ({
       onVoteSuccess();
     } catch (error: any) {
       console.error('Vote submission error:', error);
-      onVoteSuccess();
+      
+      // Extract error message from API response
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to submit vote';
+      const statusCode = error.response?.status;
+      
+      // Show appropriate error message based on status code
+      if (statusCode === 401) {
+        if (errorMessage.includes('INVALID_SECRET_KEY') || errorMessage.includes('Invalid secret key')) {
+          toast.error('Authentication failed. Please log in again.', {
+            duration: 4000,
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+          });
+          // Clear invalid credentials
+          localStorage.removeItem('secret_key');
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('user_data');
+        } else {
+          toast.error('Authentication required. Please log in.', {
+            duration: 4000,
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+          });
+        }
+      } else if (statusCode === 400) {
+        if (errorMessage.includes('DUPLICATE_VOTE') || errorMessage.includes('already voted')) {
+          toast.error('You have already voted on this rumor.', {
+            duration: 4000,
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+          });
+          onVoteSuccess(); // Refresh to show updated state
+        } else if (errorMessage.includes('VOTING_CLOSED') || errorMessage.includes('locked')) {
+          toast.error('Voting has been closed for this rumor.', {
+            duration: 4000,
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+          });
+          onVoteSuccess(); // Refresh to show locked state
+        } else {
+          toast.error(errorMessage, {
+            duration: 4000,
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+          });
+        }
+      } else if (statusCode === 404) {
+        toast.error('Rumor not found.', {
+          duration: 4000,
+          iconTheme: {
+            primary: '#ef4444',
+            secondary: '#fff',
+          },
+        });
+      } else {
+        toast.error(errorMessage, {
+          duration: 4000,
+          iconTheme: {
+            primary: '#ef4444',
+            secondary: '#fff',
+          },
+        });
+      }
     } finally {
       setIsVoting(false);
       setSelectedVote(null);
