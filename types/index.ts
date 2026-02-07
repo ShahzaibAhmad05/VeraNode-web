@@ -37,8 +37,8 @@ export interface Rumor {
 }
 
 export interface Vote {
+  id: string;
   rumorId: string;
-  nullifier: string;
   voteType: 'FACT' | 'LIE';
   weight: number;
   isWithinArea: boolean;
@@ -47,13 +47,21 @@ export interface Vote {
 
 export interface VoteStatus {
   hasVoted: boolean;
+  voteType?: 'FACT' | 'LIE';
+  timestamp?: string;
 }
 
 export interface VoteResponse {
   success: boolean;
-  nullifier: string;
-  weight: number;
-  isWithinArea: boolean;
+  message: string;
+  vote: {
+    id: string;
+    rumorId: string;
+    voteType: 'FACT' | 'LIE';
+    weight: number;
+    isWithinArea: boolean;
+    timestamp: string;
+  };
 }
 
 export interface VoteStats {

@@ -26,6 +26,11 @@ export default function DashboardPage() {
   const [activeFilter, setActiveFilter] = useState<'new' | 'voted' | 'final'>('new');
   const [areaFilter, setAreaFilter] = useState<string>('all');
 
+  // Scroll to top on mount to prevent auto-scroll issue
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   // Redirect if not authenticated
   React.useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -37,6 +42,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
+        // Fetch all rumors without status filter for client-side filtering
         const [rumorsData, userVotes] = await Promise.all([
           rumorAPI.getAll(),
           voteAPI.getUserVotes(),
@@ -214,7 +220,7 @@ export default function DashboardPage() {
                   key={rumor.id}
                   delay={0.05 * (index % 4)}
                   direction="up"
-                  triggerOnce={false}
+                  triggerOnce={true}
                 >
                   <RumorCard rumor={rumor} />
                 </ScrollReveal>

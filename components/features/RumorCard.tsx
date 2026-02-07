@@ -33,14 +33,14 @@ const RumorCard: React.FC<RumorCardProps> = ({ rumor }) => {
         return (
           <Badge variant="success" className="flex items-center space-x-1">
             <CheckCircle className="w-3 h-3" />
-            <span>Verified Fact</span>
+            <span>Verified as FACT</span>
           </Badge>
         );
       } else if (rumor.finalDecision === 'LIE') {
         return (
           <Badge variant="danger" className="flex items-center space-x-1">
             <XCircle className="w-3 h-3" />
-            <span>Confirmed Lie</span>
+            <span>Finalized as LIE</span>
           </Badge>
         );
       }
@@ -50,7 +50,7 @@ const RumorCard: React.FC<RumorCardProps> = ({ rumor }) => {
       return (
         <Badge variant="warning" className="flex items-center space-x-1">
           <Lock className="w-3 h-3" />
-          <span>Voting Locked</span>
+          <span>Analyzing...</span>
         </Badge>
       );
     }

@@ -80,7 +80,7 @@ export const authAPI = {
 
 // Rumor APIs
 export const rumorAPI = {
-  getAll: async (filters?: { status?: string }): Promise<Rumor[]> => {
+  getAll: async (filters?: { status?: 'active' | 'locked' | 'finalized' | 'all'; area?: string }): Promise<Rumor[]> => {
     const response = await api.get<RumorsResponse>('/rumors', { params: filters });
     return response.data.rumors;
   },
@@ -90,7 +90,7 @@ export const rumorAPI = {
     return response.data.rumor;
   },
 
-  create: async (content: string, areaOfVote: string, votingEndsAt: string): Promise<{ rumor: Rumor; validation: AIValidation }> => {
+  create: async (content: string, areaOfVote: string, votingEndsAt: string): Promise<{ success: boolean; rumor: Rumor; validation?: AIValidation }> => {
     const response = await api.post('/rumors', { content, areaOfVote, votingEndsAt });
     return response.data;
   },
@@ -99,12 +99,12 @@ export const rumorAPI = {
 // Vote APIs
 export const voteAPI = {
   submitVote: async (rumorId: string, voteType: 'FACT' | 'LIE'): Promise<VoteResponse> => {
-    const response = await api.post<VoteResponse>(`/rumors/${rumorId}/vote`, { voteType });
+    const response = await api.post<VoteResponse>('/voting/vote', { rumorId, voteType });
     return response.data;
   },
 
   checkVoted: async (rumorId: string): Promise<VoteStatus> => {
-    const response = await api.get<VoteStatus>(`/rumors/${rumorId}/vote-status`);
+    const response = await api.get<VoteStatus>(`/voting/status/${rumorId}`);
     return response.data;
   },
 

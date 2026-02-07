@@ -117,23 +117,23 @@ export default function RumorDetailPage() {
                     rumor.finalDecision === 'FACT' ? (
                       <Badge variant="success" className="flex items-center space-x-1">
                         <CheckCircle className="w-3 h-3" />
-                        <span>Verified Fact</span>
+                        <span>Verified as FACT</span>
                       </Badge>
                     ) : (
                       <Badge variant="danger" className="flex items-center space-x-1">
                         <XCircle className="w-3 h-3" />
-                        <span>Confirmed Lie</span>
+                        <span>Finalized as LIE</span>
                       </Badge>
                     )
                   ) : rumor.isLocked ? (
                     <Badge variant="warning" className="flex items-center space-x-1">
                       <Lock className="w-3 h-3" />
-                      <span>Voting Locked</span>
+                      <span>Analyzing...</span>
                     </Badge>
                   ) : (
                     <Badge variant="info" className="flex items-center space-x-1">
                       <TrendingUp className="w-3 h-3" />
-                      <span>Active</span>
+                      <span>Voting Active</span>
                     </Badge>
                   )}
                   <Badge variant="default">{rumor.areaOfVote}</Badge>
@@ -244,14 +244,25 @@ export default function RumorDetailPage() {
               </>
             )}
 
-            {/* Timer */}
+            {/* Timer or Locked Message */}
+            {rumor.isLocked && !rumor.isFinal && (
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-6">
+                <div className="flex items-center justify-center space-x-2">
+                  <Lock className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+                  <span className="text-sm font-medium text-yellow-800 dark:text-yellow-300">
+                    Voting ended. System is analyzing results.
+                  </span>
+                </div>
+              </div>
+            )}
+            
             {!rumor.isLocked && !rumor.isFinal && (
               <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
                 <div className="flex items-center justify-center space-x-2">
                   <div className="flex items-center space-x-2">
                     <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                     <span className="text-sm font-medium text-blue-800 dark:text-blue-300">
-                      Rumor will be uncovered in:
+                      Voting ends in:
                     </span>
                   </div>
                   <span className="text-lg font-bold text-blue-900 dark:text-blue-200">
