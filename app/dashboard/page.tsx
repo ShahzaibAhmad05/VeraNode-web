@@ -26,9 +26,17 @@ export default function DashboardPage() {
   const [activeFilter, setActiveFilter] = useState<'new' | 'voted' | 'final'>('new');
   const [areaFilter, setAreaFilter] = useState<string>('all');
 
-  // Scroll to top on mount to prevent auto-scroll issue
+  // Prevent auto-scroll and ensure page starts at top
   useEffect(() => {
-    window.scrollTo(0, 0);
+    if (typeof window !== 'undefined') {
+      window.history.scrollRestoration = 'manual';
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.history.scrollRestoration = 'auto';
+      }
+    };
   }, []);
 
   // Redirect if not authenticated
@@ -42,25 +50,23 @@ export default function DashboardPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Fetch all rumors without status filter for client-side filtering
-        const [rumorsData, userVotes] = await Promise.all([
-          rumorAPI.getAll(),
-          voteAPI.getUserVotes(),
-        ]);
-
+        const rumorsData = await rumorAPI.getAll();
         setRumors(Array.isArray(rumorsData) ? rumorsData : []);
         setFilteredRumors(Array.isArray(rumorsData) ? rumorsData : []);
         
-        // Store voted rumor IDs
-        const votedIds = new Set(
-          Array.isArray(userVotes) 
-            ? userVotes.map(vote => vote.rumorId)
-            : []
-        );
-        setVotedRumorIds(votedIds);
+        try {
+          const userVotes = await voteAPI.getUserVotes();
+          const votedIds = new Set(
+            Array.isArray(userVotes) 
+              ? userVotes.map(vote => vote.rumorId)
+              : []
+          );
+          setVotedRumorIds(votedIds);
+        } catch {
+          setVotedRumorIds(new Set());
+        }
       } catch (error: any) {
-        console.error('Failed to load data:', error);
-        toast.error('Failed to load dashboard data');
+        console.error('Failed to load rumors:', error);
         setRumors([]);
         setFilteredRumors([]);
         setVotedRumorIds(new Set());
@@ -71,6 +77,9 @@ export default function DashboardPage() {
 
     if (isAuthenticated && !authLoading) {
       loadData();
+    } else if (!authLoading) {
+      // If not authenticated and auth loading is done, stop loading
+      setIsLoading(false);
     }
   }, [isAuthenticated, authLoading]);
 

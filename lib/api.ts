@@ -10,7 +10,15 @@ const api = axios.create({
   },
 });
 
-// Interceptor to add auth token
+// Public API instance (no authentication headers)
+const publicAPI = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Interceptor to add auth token for authenticated requests
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('auth_token');
   if (token) {
@@ -81,16 +89,19 @@ export const authAPI = {
 // Rumor APIs
 export const rumorAPI = {
   getAll: async (filters?: { status?: 'active' | 'locked' | 'finalized' | 'all'; area?: string }): Promise<Rumor[]> => {
-    const response = await api.get<RumorsResponse>('/rumors', { params: filters });
+    // Use publicAPI for getAll since it doesn't require authentication per backend doc
+    const response = await publicAPI.get<RumorsResponse>('/rumors', { params: filters });
     return response.data.rumors;
   },
 
   getById: async (id: string): Promise<Rumor> => {
-    const response = await api.get<RumorResponse>(`/rumors/${id}`);
+    // Use publicAPI for getById since it's a read operation
+    const response = await publicAPI.get<RumorResponse>(`/rumors/${id}`);
     return response.data.rumor;
   },
 
   create: async (content: string, areaOfVote: string, votingEndsAt: string): Promise<{ success: boolean; rumor: Rumor; validation?: AIValidation }> => {
+    // Create requires authentication
     const response = await api.post('/rumors', { content, areaOfVote, votingEndsAt });
     return response.data;
   },

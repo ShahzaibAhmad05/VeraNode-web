@@ -23,6 +23,19 @@ export default function ProfilePage() {
   const [showSecretKeyModal, setShowSecretKeyModal] = useState(false);
   const [keyCopied, setKeyCopied] = useState(false);
 
+  // Prevent auto-scroll and ensure page starts at top
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.history.scrollRestoration = 'manual';
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.history.scrollRestoration = 'auto';
+      }
+    };
+  }, []);
+
   // Calculate days until expiration
   const getDaysUntilExpiration = () => {
     if (!user?.keyExpiresAt) return null;
@@ -47,22 +60,33 @@ export default function ProfilePage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [statsData, rumorsData] = await Promise.all([
-          userAPI.getStats(),
-          userAPI.getMyRumors(),
-        ]);
-
+        const statsData = await userAPI.getStats();
         setUserStats(statsData);
-        setMyRumors(rumorsData);
-      } catch (error: any) {
-        toast.error('Failed to load profile data');
-      } finally {
-        setIsLoading(false);
+      } catch {
+        setUserStats({
+          rumorsPosted: 0,
+          rumorsVoted: 0,
+          correctVotes: 0,
+          incorrectVotes: 0,
+          accountStatus: 'ACTIVE' as const,
+        });
       }
+      
+      try {
+        const rumorsData = await userAPI.getMyRumors();
+        setMyRumors(Array.isArray(rumorsData) ? rumorsData : []);
+      } catch {
+        setMyRumors([]);
+      }
+      
+      setIsLoading(false);
     };
 
     if (isAuthenticated && !authLoading) {
       loadData();
+    } else if (!authLoading) {
+      // If not authenticated and auth loading is done, stop loading
+      setIsLoading(false);
     }
   }, [isAuthenticated, authLoading]);
 

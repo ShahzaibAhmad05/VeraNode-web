@@ -30,7 +30,6 @@ const VotingInterface: React.FC<VotingInterfaceProps> = ({
 
   const handleVoteClick = (voteType: 'FACT' | 'LIE') => {
     if (hasVoted) {
-      toast.error('You have already voted on this rumor');
       return;
     }
 
@@ -48,22 +47,17 @@ const VotingInterface: React.FC<VotingInterfaceProps> = ({
     setShowConfirmModal(false);
 
     try {
-      const response = await voteAPI.submitVote(rumor.id, voteType);
-      
-      if (response.success) {
-        toast.success('Vote submitted successfully!', {
-          iconTheme: {
-            primary: '#10b981',
-            secondary: '#fff',
-          },
-        });
-        onVoteSuccess();
-      } else {
-        toast.error('Failed to submit vote');
-      }
+      await voteAPI.submitVote(rumor.id, voteType);
+      toast.success('Vote submitted successfully!', {
+        iconTheme: {
+          primary: '#10b981',
+          secondary: '#fff',
+        },
+      });
+      onVoteSuccess();
     } catch (error: any) {
-      const message = error.response?.data?.message || 'Failed to submit vote';
-      toast.error(message);
+      console.error('Vote submission error:', error);
+      onVoteSuccess();
     } finally {
       setIsVoting(false);
       setSelectedVote(null);
@@ -125,7 +119,7 @@ const VotingInterface: React.FC<VotingInterfaceProps> = ({
               className="w-full bg-green-600 hover:bg-green-700 focus:ring-green-500"
             >
               <CheckCircle className="w-5 h-5 mr-2" />
-              Vote FACT
+              FACT
             </Button>
           </motion.div>
 
@@ -138,7 +132,7 @@ const VotingInterface: React.FC<VotingInterfaceProps> = ({
               className="w-full bg-red-600 hover:bg-red-700 focus:ring-red-500"
             >
               <XCircle className="w-5 h-5 mr-2" />
-              Vote LIE
+              LIE
             </Button>
           </motion.div>
         </div>

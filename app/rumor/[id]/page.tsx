@@ -34,15 +34,17 @@ export default function RumorDetailPage() {
   // Load rumor data
   const loadRumorData = async () => {
     try {
-      const [rumorData, voteStatus] = await Promise.all([
-        rumorAPI.getById(rumorId),
-        voteAPI.checkVoted(rumorId),
-      ]);
-
+      const rumorData = await rumorAPI.getById(rumorId);
       setRumor(rumorData);
-      setHasVoted(voteStatus.hasVoted);
+      
+      try {
+        const voteStatus = await voteAPI.checkVoted(rumorId);
+        setHasVoted(voteStatus.hasVoted);
+      } catch {
+        setHasVoted(false);
+      }
     } catch (error: any) {
-      toast.error('Failed to load rumor');
+      console.error('Failed to load rumor:', error);
       router.push('/dashboard');
     } finally {
       setIsLoading(false);
