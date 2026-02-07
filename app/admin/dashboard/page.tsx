@@ -162,7 +162,7 @@ export default function AdminDashboardPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 height-[calc(100vh-4rem)] overflow-y-auto">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

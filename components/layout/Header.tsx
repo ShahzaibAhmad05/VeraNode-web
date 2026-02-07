@@ -57,6 +57,11 @@ const Header: React.FC = () => {
     }
   };
 
+  // Don't render header on admin routes
+  if (pathname.startsWith('/admin')) {
+    return null;
+  }
+
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: Home },
     { href: '/rumor/create', label: 'Post Rumor', icon: PlusCircle },
